@@ -30,8 +30,8 @@ export const initialSettings: RestaurantSettings = {
   thermalPrinterWidth: '80mm',
   thermalFontSize: 'normal',
   thermalCutFeedLines: 2,
-  autoPrintReceiptOnCheckout: false,
-  autoPrintKotOnCheckout: false,
+  autoPrintReceiptOnCheckout: true,
+  autoPrintKotOnCheckout: true,
   silentKioskPrintEnabled: true,
 };
 

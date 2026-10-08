@@ -3,6 +3,11 @@ import { User, RestaurantSettings, Order } from '../types';
 import { getSettings, getAllFromStore, initializeDatabase, createAutoSnapshot } from '../db/indexedDB';
 import { initialUsers, initialSettings } from '../db/seedData';
 import { playSound } from '../utils/sound';
+import {
+  generateReceiptHtml,
+  generateKotHtml,
+  printThermalDirect,
+} from '../utils/thermalPrinter';
 
 interface Toast {
   id: string;
@@ -36,7 +41,8 @@ interface AppContextType {
   toast: Toast | null;
   showToast: (message: string, type?: 'success' | 'error' | 'info' | 'warning') => void;
   printData: PrintReceiptData | null;
-  triggerPrintReceipt: (order: Order, mode?: 'receipt' | 'kot') => void;
+  triggerPrintReceipt: (order: Order, mode?: 'receipt' | 'kot', forceModal?: boolean) => void;
+  previewReceipt: (order: Order, mode?: 'receipt' | 'kot') => void;
   closePrintReceipt: () => void;
   printReportData: PrintableReportData | null;
   triggerPrintReport: (data: PrintableReportData) => void;
@@ -226,7 +232,46 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const triggerPrintReceipt = (order: Order, mode: 'receipt' | 'kot' = 'receipt') => {
+  const triggerPrintReceipt = async (
+    order: Order,
+    mode: 'receipt' | 'kot' = 'receipt',
+    forceModal = false
+  ) => {
+    if (forceModal) {
+      setPrintData({ order, mode });
+      return;
+    }
+
+    // Direct single-click silent printing
+    try {
+      const htmlContent =
+        mode === 'kot'
+          ? generateKotHtml(order, settings, {
+              paperWidth: settings.thermalPrinterWidth || '80mm',
+              fontSize: (settings.thermalFontSize as any) || 'normal',
+              feedLines: settings.thermalCutFeedLines ?? 2,
+            })
+          : generateReceiptHtml(order, settings, {
+              paperWidth: settings.thermalPrinterWidth || '80mm',
+              fontSize: (settings.thermalFontSize as any) || 'normal',
+              feedLines: settings.thermalCutFeedLines ?? 2,
+            });
+
+      await printThermalDirect(htmlContent, settings.thermalPrinterWidth || '80mm');
+      playSound('beep');
+      showToast(
+        mode === 'kot'
+          ? `⚡ Kitchen KOT #${order.orderNumber} printed!`
+          : `⚡ Thermal Receipt #${order.orderNumber} printed!`,
+        'success'
+      );
+    } catch (err) {
+      console.warn('Silent thermal print failed, opening preview modal', err);
+      setPrintData({ order, mode });
+    }
+  };
+
+  const previewReceipt = (order: Order, mode: 'receipt' | 'kot' = 'receipt') => {
     setPrintData({ order, mode });
   };
 
@@ -265,6 +310,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         showToast,
         printData,
         triggerPrintReceipt,
+        previewReceipt,
         closePrintReceipt,
         printReportData,
         triggerPrintReport,

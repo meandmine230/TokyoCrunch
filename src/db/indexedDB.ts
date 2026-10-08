@@ -228,6 +228,15 @@ export async function initializeDatabase(): Promise<void> {
 
     await tx.done;
     console.log('Tokyo Crunch Database successfully seeded.');
+  } else {
+    // Ensure 1-click silent printing and auto checkout printing are enabled
+    if (!existingSettings.silentKioskPrintEnabled || !existingSettings.autoPrintReceiptOnCheckout) {
+      existingSettings.silentKioskPrintEnabled = true;
+      existingSettings.autoPrintReceiptOnCheckout = true;
+      existingSettings.autoPrintKotOnCheckout = true;
+      await db.put('settings', existingSettings, 'current');
+      console.log('Tokyo Crunch settings updated with 1-click silent printing.');
+    }
   }
 }
 
