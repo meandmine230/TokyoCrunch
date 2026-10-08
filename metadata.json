@@ -1,0 +1,6 @@
+{
+  "name": "Tokyo Crunch POS & Restaurant Management",
+  "description": "Offline-first restaurant management and point-of-sale system for Tokyo Crunch featuring inventory tracking, recipes, kitchen display, cashbook, and audit logging.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

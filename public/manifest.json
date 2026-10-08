@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "Tokyo Crunch POS & Restaurant System",
+  "short_name": "Tokyo Crunch",
+  "description": "Offline-first restaurant POS and management system for Tokyo Crunch, Itfaq City",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#FF6B00",
+  "background_color": "#121214",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
