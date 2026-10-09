@@ -29,11 +29,32 @@
 /* =======================================================
    THERMAL PRINTER & DOCUMENT PRINT STYLES
    ======================================================= */
+/* Screen mode: direct thermal mount is completely invisible */
+#tokyo-thermal-print-container {
+  display: none !important;
+}
+
 @media print {
   @page {
     /* Critical for thermal rolls: 0 margins removes browser default A4 margins */
     margin: 0 !important;
     size: auto;
+  }
+
+  /* When direct thermal printing is active, hide everything else */
+  body.is-printing-thermal-direct > *:not(#tokyo-thermal-print-container) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.is-printing-thermal-direct #tokyo-thermal-print-container {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   /* Reset all HTML / body constraints */

@@ -56,6 +56,7 @@ export const PosModule: React.FC = () => {
     settings,
     showToast,
     triggerPrintReceipt,
+    previewReceipt,
     triggerDataRefresh,
     dataVersion,
     setActiveTab,
@@ -465,17 +466,11 @@ export const PosModule: React.FC = () => {
       handleClearCart();
       triggerDataRefresh();
 
-      // Auto silent print if configured, else show receipt preview
+      // Auto silent print if configured, else show receipt preview modal
       if (settings.autoPrintReceiptOnCheckout) {
-        try {
-          const html = generateReceiptHtml(finalOrder, settings);
-          printThermalDirect(html, settings.thermalPrinterWidth || '80mm');
-        } catch (e) {
-          console.warn('Auto print error', e);
-          triggerPrintReceipt(finalOrder, 'receipt');
-        }
+        await triggerPrintReceipt(finalOrder, 'receipt');
       } else {
-        triggerPrintReceipt(finalOrder, 'receipt');
+        previewReceipt(finalOrder, 'receipt');
       }
     } catch (err: any) {
       console.error('Failed to complete POS order', err);

@@ -707,21 +707,26 @@ export const SettingsModule: React.FC = () => {
                     </div>
                   </label>
 
-                  <button
-                    type="button"
-                    onClick={openDesktopSetupModal}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 text-xs font-bold transition-all shrink-0"
-                  >
-                    <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Setup 1-Click Silent Print</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={openDesktopSetupModal}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-950/80 hover:bg-orange-900 border border-orange-800 text-[#FF6B00] text-xs font-bold transition-all shrink-0"
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>🦁 Brave &amp; Vercel Silent Print Fix</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div className="p-2.5 bg-zinc-900/60 rounded-xl border border-zinc-800/80 text-[11px] text-zinc-400 leading-normal flex items-start gap-2">
-                  <span className="text-amber-400 font-bold shrink-0">⚠️ Important:</span>
-                  <span>
-                    To eliminate Chrome's print dialog entirely so bills print with a <strong>single click</strong>, run the POS using our desktop shortcut with <em>--kiosk-printing</em>.
-                  </span>
+                <div className="p-3 bg-zinc-900/70 rounded-xl border border-zinc-800/80 text-[11px] text-zinc-300 leading-normal flex items-start gap-2.5">
+                  <span className="text-[#FF6B00] font-bold text-sm shrink-0">⚡</span>
+                  <div>
+                    <strong className="text-white">Brave Browser &amp; Vercel 1-Click Silent Printing:</strong>
+                    <p className="text-zinc-400 text-[10.5px] mt-0.5">
+                      To stop Brave from opening a second window (print preview), launch the POS using our dedicated profile shortcut with <code className="text-emerald-400 font-mono">--kiosk-printing --disable-print-preview</code>, or connect your USB thermal printer directly via Web Serial. Click <strong>&quot;🦁 Brave &amp; Vercel Silent Print Fix&quot;</strong> above to download the 1-click installer.
+                    </p>
+                  </div>
                 </div>
               </div>
 

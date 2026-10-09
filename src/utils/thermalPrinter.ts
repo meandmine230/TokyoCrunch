@@ -328,7 +328,8 @@ export function generateKotHtml(
 }
 
 /**
- * Universal Direct Thermal Print Execution via Isolated IFrame
+ * Direct Thermal Print Execution in Active Window
+ * Eliminates iframes completely to prevent Brave Browser from opening a second window/blank tab on Vercel
  */
 export function printThermalDirect(
   htmlContent: string,
@@ -340,190 +341,145 @@ export function printThermalDirect(
       const actualWidth = is58 ? '48mm' : '72mm';
       const pageSize = is58 ? '58mm auto' : '80mm auto';
 
-      let iframe = document.getElementById('tokyo-thermal-print-frame') as HTMLIFrameElement;
-      if (iframe) {
-        iframe.remove();
-      }
+      // Remove any legacy iframe or previous thermal containers
+      const oldFrame = document.getElementById('tokyo-thermal-print-frame');
+      if (oldFrame) oldFrame.remove();
+      const oldContainer = document.getElementById('tokyo-thermal-print-container');
+      if (oldContainer) oldContainer.remove();
 
-      iframe = document.createElement('iframe');
-      iframe.id = 'tokyo-thermal-print-frame';
-      iframe.style.position = 'fixed';
-      iframe.style.left = '-9999px';
-      iframe.style.top = '-9999px';
-      iframe.style.width = '100px';
-      iframe.style.height = '100px';
-      iframe.style.border = 'none';
-      iframe.style.zIndex = '-9999';
-      document.body.appendChild(iframe);
+      // Create a direct DOM container in the current document
+      const container = document.createElement('div');
+      container.id = 'tokyo-thermal-print-container';
+      container.className = `tokyo-thermal-print-mount ${is58 ? 'thermal-width-58mm' : 'thermal-width-80mm'}`;
 
-      const frameDoc = iframe.contentWindow?.document;
-      if (!frameDoc) {
-        window.print();
-        resolve(true);
-        return;
-      }
+      // Embed inline styling for the thermal receipt
+      const styleBlock = document.createElement('style');
+      styleBlock.textContent = `
+        #tokyo-thermal-print-container {
+          display: none;
+        }
+        @media print {
+          @page {
+            margin: 0 !important;
+            size: ${pageSize} !important;
+          }
+          body.is-printing-thermal-direct > *:not(#tokyo-thermal-print-container) {
+            display: none !important;
+            visibility: hidden !important;
+          }
+          body.is-printing-thermal-direct #tokyo-thermal-print-container {
+            display: block !important;
+            position: static !important;
+            width: ${actualWidth} !important;
+            max-width: ${actualWidth} !important;
+            margin: 0 !important;
+            padding: 1.5mm 1mm !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-family: 'JetBrains Mono', 'Courier New', Courier, monospace !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          #tokyo-thermal-print-container .receipt-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #000000 !important;
+            background: #ffffff !important;
+            font-size: ${is58 ? '9.5px' : '11px'};
+            line-height: 1.25;
+          }
+          #tokyo-thermal-print-container .center { text-align: center; }
+          #tokyo-thermal-print-container .right { text-align: right; }
+          #tokyo-thermal-print-container .bold { font-weight: bold; }
+          #tokyo-thermal-print-container .uppercase { text-transform: uppercase; }
+          #tokyo-thermal-print-container .brand-name { font-size: ${is58 ? '13px' : '15px'}; font-weight: 900; letter-spacing: 0.5px; }
+          #tokyo-thermal-print-container .text-sm { font-size: ${is58 ? '9px' : '10px'}; }
+          #tokyo-thermal-print-container .text-xs { font-size: ${is58 ? '8.5px' : '9px'}; }
+          #tokyo-thermal-print-container .row { display: flex; justify-content: space-between; align-items: baseline; }
+          #tokyo-thermal-print-container .meta-section { line-height: 1.35; }
+          #tokyo-thermal-print-container .divider {
+            white-space: pre;
+            overflow: hidden;
+            margin: 1.5mm 0;
+            font-weight: bold;
+            font-size: 10px;
+            line-height: 1;
+            color: #000000;
+          }
+          #tokyo-thermal-print-container .divider-sub {
+            white-space: pre;
+            overflow: hidden;
+            margin: 1mm 0;
+            font-size: 9px;
+            color: #000000;
+          }
+          #tokyo-thermal-print-container .items-list { margin: 1mm 0; }
+          #tokyo-thermal-print-container .item-block { margin-bottom: 1.5mm; }
+          #tokyo-thermal-print-container .addons { font-style: italic; }
+          #tokyo-thermal-print-container .grand-total { font-size: ${is58 ? '13px' : '14px'}; font-weight: 900; margin: 1mm 0; }
+          #tokyo-thermal-print-container .footer { margin-top: 1.5mm; line-height: 1.2; }
 
-      const fullHtml = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Thermal Print</title>
-          <style>
-            @page {
-              margin: 0 !important;
-              size: ${pageSize} !important;
-            }
-            *, *::before, *::after {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-            }
-            html, body {
-              margin: 0 !important;
-              padding: 0 !important;
-              background: #ffffff !important;
-              color: #000000 !important;
-              font-family: 'JetBrains Mono', 'Courier New', Courier, monospace !important;
-              -webkit-print-color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            .receipt-container {
-              width: ${actualWidth} !important;
-              max-width: ${actualWidth} !important;
-              margin: 0 !important;
-              padding: 1.5mm 1mm !important;
-              color: #000000 !important;
-              background: #ffffff !important;
-              font-size: ${is58 ? '9.5px' : '11px'};
-              line-height: 1.25;
-            }
-            .center { text-align: center; }
-            .right { text-align: right; }
-            .bold { font-weight: bold; }
-            .uppercase { text-transform: uppercase; }
-            .brand-name { font-size: ${is58 ? '13px' : '15px'}; font-weight: 900; letter-spacing: 0.5px; }
-            .text-sm { font-size: ${is58 ? '9px' : '10px'}; }
-            .text-xs { font-size: ${is58 ? '8.5px' : '9px'}; }
-            .row { display: flex; justify-content: space-between; align-items: baseline; }
-            .meta-section { line-height: 1.35; }
-            .divider {
-              white-space: pre;
-              overflow: hidden;
-              margin: 1.5mm 0;
-              font-weight: bold;
-              font-size: 10px;
-              line-height: 1;
-              color: #000000;
-            }
-            .divider-sub {
-              white-space: pre;
-              overflow: hidden;
-              margin: 1mm 0;
-              font-size: 9px;
-              color: #000000;
-            }
-            .items-list { margin: 1mm 0; }
-            .item-block { margin-bottom: 1.5mm; }
-            .addons { font-style: italic; }
-            .grand-total { font-size: ${is58 ? '13px' : '14px'}; font-weight: 900; margin: 1mm 0; }
-            .footer { margin-top: 1.5mm; line-height: 1.2; }
-
-            /* KITCHEN SPECIFIC STYLES */
-            .kot-container {
-              font-size: ${is58 ? '11px' : '12.5px'};
-            }
-            .kot-badge {
-              font-size: ${is58 ? '12px' : '14px'};
-              font-weight: 900;
-              letter-spacing: 1px;
-            }
-            .kot-hero {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin: 1mm 0;
-            }
-            .kot-order-num {
-              font-size: ${is58 ? '15px' : '18px'};
-              font-weight: 900;
-            }
-            .kot-type-badge {
-              font-size: ${is58 ? '12px' : '14px'};
-              font-weight: 900;
-            }
-            .kot-table-box {
-              font-size: ${is58 ? '16px' : '20px'};
-              font-weight: 900;
-              border: 2px solid #000000;
-              padding: 1.5mm 0;
-              margin: 1.5mm 0;
-            }
-            .kot-item-row {
-              margin: 1.5mm 0;
-            }
-            .kot-item-main {
-              display: flex;
-              align-items: baseline;
-              font-weight: 900;
-              font-size: ${is58 ? '12px' : '14px'};
-            }
-            .kot-item-qty {
-              display: inline-block;
-              width: ${is58 ? '26px' : '32px'};
-              font-weight: 900;
-              font-size: ${is58 ? '13px' : '15px'};
-            }
-            .kot-item-name {
-              flex: 1;
-            }
-            .kot-addon-list {
-              padding-left: ${is58 ? '26px' : '32px'};
-              font-size: ${is58 ? '10px' : '11px'};
-              font-weight: bold;
-            }
-            .kot-note-box {
-              padding-left: ${is58 ? '26px' : '32px'};
-              font-size: ${is58 ? '10px' : '11px'};
-              font-weight: 900;
-              margin-top: 0.5mm;
-            }
-            .kot-special-note {
-              border: 1.5px solid #000000;
-              padding: 1.5mm;
-              margin: 1.5mm 0;
-              font-size: ${is58 ? '10px' : '11px'};
-            }
-            .kot-footer {
-              font-size: ${is58 ? '10px' : '11px'};
-              margin-top: 1mm;
-            }
-          </style>
-        </head>
-        <body>
-          ${htmlContent}
-        </body>
-        </html>
+          /* Kitchen KOT styles */
+          #tokyo-thermal-print-container .kot-container { font-size: ${is58 ? '11px' : '12.5px'}; }
+          #tokyo-thermal-print-container .kot-badge { font-size: ${is58 ? '12px' : '14px'}; font-weight: 900; letter-spacing: 1px; }
+          #tokyo-thermal-print-container .kot-hero { display: flex; justify-content: space-between; align-items: center; margin: 1mm 0; }
+          #tokyo-thermal-print-container .kot-order-num { font-size: ${is58 ? '15px' : '18px'}; font-weight: 900; }
+          #tokyo-thermal-print-container .kot-type-badge { font-size: ${is58 ? '12px' : '14px'}; font-weight: 900; }
+          #tokyo-thermal-print-container .kot-table-box {
+            font-size: ${is58 ? '16px' : '20px'};
+            font-weight: 900;
+            border: 2px solid #000000;
+            padding: 1.5mm 0;
+            margin: 1.5mm 0;
+          }
+          #tokyo-thermal-print-container .kot-item-row { margin: 1.5mm 0; }
+          #tokyo-thermal-print-container .kot-item-main { display: flex; align-items: baseline; font-weight: 900; font-size: ${is58 ? '12px' : '14px'}; }
+          #tokyo-thermal-print-container .kot-item-qty { display: inline-block; width: ${is58 ? '26px' : '32px'}; font-weight: 900; font-size: ${is58 ? '13px' : '15px'}; }
+          #tokyo-thermal-print-container .kot-item-name { flex: 1; }
+          #tokyo-thermal-print-container .kot-addon-list { padding-left: ${is58 ? '26px' : '32px'}; font-size: ${is58 ? '10px' : '11px'}; font-weight: bold; }
+          #tokyo-thermal-print-container .kot-note-box { padding-left: ${is58 ? '26px' : '32px'}; font-size: ${is58 ? '10px' : '11px'}; font-weight: 900; margin-top: 0.5mm; }
+          #tokyo-thermal-print-container .kot-special-note { border: 1.5px solid #000000; padding: 1.5mm; margin: 1.5mm 0; font-size: ${is58 ? '10px' : '11px'}; }
+          #tokyo-thermal-print-container .kot-footer { font-size: ${is58 ? '10px' : '11px'}; margin-top: 1mm; }
+        }
       `;
 
-      frameDoc.open();
-      frameDoc.write(fullHtml);
-      frameDoc.close();
+      container.appendChild(styleBlock);
 
+      const contentHolder = document.createElement('div');
+      contentHolder.innerHTML = htmlContent;
+      container.appendChild(contentHolder);
+
+      document.body.appendChild(container);
+      document.body.classList.add('is-printing-thermal-direct');
+
+      let cleanedUp = false;
+      const cleanup = () => {
+        if (cleanedUp) return;
+        cleanedUp = true;
+        document.body.classList.remove('is-printing-thermal-direct');
+        if (container.parentNode) {
+          container.parentNode.removeChild(container);
+        }
+        window.removeEventListener('afterprint', cleanup);
+        resolve(true);
+      };
+
+      window.addEventListener('afterprint', cleanup);
+
+      // Trigger print directly on top window (NEVER opens a new window or tab in Brave)
       setTimeout(() => {
         try {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-          resolve(true);
-        } catch (e) {
-          console.warn('Iframe print failed, falling back to window.print', e);
           window.print();
-          resolve(true);
+        } catch (e) {
+          console.error('window.print error', e);
         }
-      }, 250);
+        // Generous fallback cleanup in case afterprint does not fire
+        setTimeout(cleanup, 30000);
+      }, 50);
     } catch (err) {
       console.error('Direct thermal print error', err);
-      window.print();
       resolve(false);
     }
   });

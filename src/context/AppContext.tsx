@@ -8,6 +8,11 @@ import {
   generateKotHtml,
   printThermalDirect,
 } from '../utils/thermalPrinter';
+import {
+  isWebSerialConnected,
+  printReceiptWebSerial,
+  printKotWebSerial,
+} from '../utils/webSerialPrinter';
 
 interface Toast {
   id: string;
@@ -244,6 +249,26 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     // Direct single-click silent printing
     try {
+      // 1. If Direct USB Web Serial printer is active, print 100% silently with zero dialogs
+      if (isWebSerialConnected()) {
+        const serialSuccess =
+          mode === 'kot'
+            ? await printKotWebSerial(order, settings)
+            : await printReceiptWebSerial(order, settings);
+
+        if (serialSuccess) {
+          playSound('beep');
+          showToast(
+            mode === 'kot'
+              ? `⚡ USB Kitchen KOT #${order.orderNumber} printed!`
+              : `⚡ USB Thermal Receipt #${order.orderNumber} printed!`,
+            'success'
+          );
+          return;
+        }
+      }
+
+      // 2. Windows Kiosk / Browser Direct Printing
       const htmlContent =
         mode === 'kot'
           ? generateKotHtml(order, settings, {

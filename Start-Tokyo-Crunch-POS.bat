@@ -34,6 +34,20 @@ timeout /t 3 /nobreak >nul
 :: --kiosk-printing BYPASSES Chrome's print preview dialog and prints directly to your thermal printer!
 echo [OPENING] Launching POS with 1-Click Silent Thermal Printing...
 
+:: Try Brave Browser
+if exist "%ProgramFiles%\BraveSoftware\Brave-Browser\Application\brave.exe" (
+    start "" "%ProgramFiles%\BraveSoftware\Brave-Browser\Application\brave.exe" --kiosk-printing --app=http://localhost:3000 --start-maximized
+    exit
+)
+if exist "%LocalAppData%\BraveSoftware\Brave-Browser\Application\brave.exe" (
+    start "" "%LocalAppData%\BraveSoftware\Brave-Browser\Application\brave.exe" --kiosk-printing --app=http://localhost:3000 --start-maximized
+    exit
+)
+if exist "%ProgramFiles(x86)%\BraveSoftware\Brave-Browser\Application\brave.exe" (
+    start "" "%ProgramFiles(x86)%\BraveSoftware\Brave-Browser\Application\brave.exe" --kiosk-printing --app=http://localhost:3000 --start-maximized
+    exit
+)
+
 :: Try Google Chrome
 if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" (
     start "" "%ProgramFiles%\Google\Chrome\Application\chrome.exe" --kiosk-printing --app=http://localhost:3000 --start-maximized

@@ -16,6 +16,13 @@ import {
   generateKotHtml,
   printThermalDirect,
 } from '../../utils/thermalPrinter';
+import {
+  isWebSerialSupported,
+  isWebSerialConnected,
+  connectWebSerialPrinter,
+  printReceiptWebSerial,
+  printKotWebSerial,
+} from '../../utils/webSerialPrinter';
 
 export const PrintableReceipt: React.FC = () => {
   const { printData, closePrintReceipt, settings, refreshSettings, openDesktopSetupModal } = useApp();
@@ -45,6 +52,18 @@ export const PrintableReceipt: React.FC = () => {
   const handlePrint = async () => {
     setIsPrinting(true);
     try {
+      // 1. Direct Web Serial USB print (100% silent, zero windows, zero dialogs)
+      if (isWebSerialConnected()) {
+        const ok = isKot
+          ? await printKotWebSerial(order, settings, { paperWidth, feedLines })
+          : await printReceiptWebSerial(order, settings, { paperWidth, feedLines });
+        if (ok) {
+          closePrintReceipt();
+          return;
+        }
+      }
+
+      // 2. Direct isolated HTML thermal mount (Windows Default Printer)
       const htmlContent = isKot
         ? generateKotHtml(order, settings, { paperWidth, fontSize, feedLines })
         : generateReceiptHtml(order, settings, { paperWidth, fontSize, feedLines });
@@ -139,11 +158,11 @@ export const PrintableReceipt: React.FC = () => {
               <button
                 type="button"
                 onClick={openDesktopSetupModal}
-                className="p-1.5 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors bg-emerald-950/60 border border-emerald-800 text-emerald-300 hover:bg-emerald-900/60"
-                title="Enable Single-Click Print without Chrome dialog"
+                className="p-1.5 sm:px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors bg-orange-950/60 border border-orange-800 text-[#FF6B00] hover:bg-orange-900/60"
+                title="Fix Brave 2nd window & setup silent printing on Vercel"
               >
-                <Zap className="w-3.5 h-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">1-Click Silent Print</span>
+                <Zap className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">🦁 Brave &amp; Vercel Silent Fix</span>
               </button>
 
               <button
