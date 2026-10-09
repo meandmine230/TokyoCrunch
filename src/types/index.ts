@@ -46,6 +46,7 @@ export interface Category {
 export interface ProductVariant {
   name: string;
   price: number;
+  actualCost?: number; // Owner's independent actual food costing
 }
 
 export interface ProductAddon {
@@ -60,6 +61,7 @@ export interface Product {
   name: string;
   description?: string;
   basePrice: number;
+  actualCost?: number; // Owner's independent actual food costing
   variants: ProductVariant[];
   addons: ProductAddon[];
   available: boolean;
@@ -286,7 +288,8 @@ export interface Staff {
   name: string;
   role: 'Cashier' | 'Head Chef' | 'Kitchen Assistant' | 'Manager' | 'Rider' | 'Cleaner';
   phone: string;
-  salary: number;
+  salary: number; // monthly salary OR daily wage amount
+  salaryType?: 'monthly' | 'daily'; // 'monthly' (default) or 'daily'
   joinDate: string;
   active: boolean;
 }
@@ -306,7 +309,7 @@ export interface SalaryPayment {
   staffName: string;
   date: string;
   month: string; // e.g. "September 2026"
-  type: 'monthly_salary' | 'advance';
+  type: 'monthly_salary' | 'daily_wage' | 'advance';
   amount: number;
   paymentMethod: PaymentMethod;
   notes?: string;

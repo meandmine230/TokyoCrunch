@@ -15,6 +15,7 @@ import {
   Flame,
   Scroll,
   Minus,
+  Calculator,
 } from 'lucide-react';
 
 export const MenuModule: React.FC = () => {
@@ -32,6 +33,7 @@ export const MenuModule: React.FC = () => {
   const [bomVariantName, setBomVariantName] = useState<string>('Standard');
   const [bomAddIngredientId, setBomAddIngredientId] = useState<string>('');
   const [bomAddQty, setBomAddQty] = useState<number>(1);
+  const [bomOwnerCostInput, setBomOwnerCostInput] = useState<string>('');
 
   // Modal State for Products
   const [showProductModal, setShowProductModal] = useState(false);
@@ -40,6 +42,7 @@ export const MenuModule: React.FC = () => {
   const [prodCatId, setProdCatId] = useState('');
   const [prodDesc, setProdDesc] = useState('');
   const [prodBasePrice, setProdBasePrice] = useState<number>(0);
+  const [prodActualCost, setProdActualCost] = useState<number | undefined>(undefined);
   const [prodVariants, setProdVariants] = useState<ProductVariant[]>([]);
   const [prodAddons, setProdAddons] = useState<ProductAddon[]>([]);
   const [prodAvailable, setProdAvailable] = useState(true);
@@ -48,6 +51,7 @@ export const MenuModule: React.FC = () => {
   // Variant input row
   const [varNameInput, setVarNameInput] = useState('');
   const [varPriceInput, setVarPriceInput] = useState<number>(0);
+  const [varCostInput, setVarCostInput] = useState<number | undefined>(undefined);
 
   // Modal State for Categories
   const [showCategoryModal, setShowCategoryModal] = useState(false);
@@ -84,6 +88,7 @@ export const MenuModule: React.FC = () => {
       setProdCatId(product.categoryId);
       setProdDesc(product.description || '');
       setProdBasePrice(product.basePrice);
+      setProdActualCost(product.actualCost);
       setProdVariants([...product.variants]);
       setProdAddons([...product.addons]);
       setProdAvailable(product.available);
@@ -94,6 +99,7 @@ export const MenuModule: React.FC = () => {
       setProdCatId(categories[0]?.id || '');
       setProdDesc('');
       setProdBasePrice(350);
+      setProdActualCost(undefined);
       setProdVariants([{ name: 'Standard', price: 350 }]);
       setProdAddons([
         { id: 'addon-cheese', name: 'Cheese Slice', price: 50 },
@@ -102,6 +108,9 @@ export const MenuModule: React.FC = () => {
       setProdAvailable(true);
       setProdIsPopular(false);
     }
+    setVarNameInput('');
+    setVarPriceInput(0);
+    setVarCostInput(undefined);
     setShowProductModal(true);
   };
 
@@ -110,9 +119,17 @@ export const MenuModule: React.FC = () => {
       showToast('Enter a valid variant name and price', 'warning');
       return;
     }
-    setProdVariants((prev) => [...prev, { name: varNameInput.trim(), price: varPriceInput }]);
+    setProdVariants((prev) => [
+      ...prev,
+      {
+        name: varNameInput.trim(),
+        price: varPriceInput,
+        actualCost: varCostInput && varCostInput > 0 ? varCostInput : undefined,
+      },
+    ]);
     setVarNameInput('');
     setVarPriceInput(0);
+    setVarCostInput(undefined);
   };
 
   const handleRemoveVariant = (index: number) => {
@@ -128,7 +145,13 @@ export const MenuModule: React.FC = () => {
 
     const productId = editingProductId || `prod-${Date.now()}`;
     const productVariantsToSave =
-      prodVariants.length > 0 ? prodVariants : [{ name: 'Standard', price: prodBasePrice }];
+      prodVariants.length > 0 ? prodVariants : [{ name: 'Standard', price: prodBasePrice, actualCost: prodActualCost }];
+
+    const existing = editingProductId ? products.find((p) => p.id === editingProductId) : undefined;
+    const finalActualCost =
+      prodActualCost !== undefined && prodActualCost > 0
+        ? prodActualCost
+        : existing?.actualCost;
 
     const newProduct: Product = {
       id: productId,
@@ -136,6 +159,7 @@ export const MenuModule: React.FC = () => {
       name: prodName.trim(),
       description: prodDesc.trim() || undefined,
       basePrice: prodBasePrice,
+      actualCost: finalActualCost,
       variants: productVariantsToSave,
       addons: prodAddons,
       available: prodAvailable,
@@ -148,7 +172,7 @@ export const MenuModule: React.FC = () => {
       userName: currentUser.name,
       action: editingProductId ? 'PRODUCT_UPDATED' : 'PRODUCT_CREATED',
       module: 'Menu',
-      details: `${newProduct.name} saved. Price: ${newProduct.basePrice}`,
+      details: `${newProduct.name} saved. Price: ${newProduct.basePrice}, Actual Cost: ${newProduct.actualCost || 'BOM'}`,
     });
 
     showToast(`Product ${newProduct.name} saved`, 'success');
@@ -170,8 +194,92 @@ export const MenuModule: React.FC = () => {
   // Open Simple-Side BOM Drawer
   const handleOpenBomDrawer = (product: Product) => {
     setBomProduct(product);
-    setBomVariantName(product.variants[0]?.name || 'Standard');
+    const initialVariant = product.variants[0]?.name || 'Standard';
+    setBomVariantName(initialVariant);
     setBomAddQty(1);
+    const matchedV = product.variants.find((v) => v.name === initialVariant);
+    const cost = matchedV?.actualCost ?? product.actualCost;
+    setBomOwnerCostInput(cost !== undefined && cost > 0 ? String(cost) : '');
+  };
+
+  // When variant changes in BOM Drawer, sync owner cost input
+  useEffect(() => {
+    if (bomProduct) {
+      const matchedV = bomProduct.variants.find((v) => v.name === bomVariantName);
+      const cost = matchedV?.actualCost ?? bomProduct.actualCost;
+      setBomOwnerCostInput(cost !== undefined && cost > 0 ? String(cost) : '');
+    }
+  }, [bomVariantName, bomProduct]);
+
+  // Save Owner Independent Actual Cost from BOM Drawer
+  const handleSaveBomOwnerCost = async () => {
+    if (!bomProduct) return;
+    const costVal = Number(bomOwnerCostInput);
+    if (isNaN(costVal) || costVal < 0) {
+      showToast('Please enter a valid actual cost', 'warning');
+      return;
+    }
+
+    const updatedProduct = { ...bomProduct };
+    if (updatedProduct.variants && updatedProduct.variants.length > 0) {
+      updatedProduct.variants = updatedProduct.variants.map((v) =>
+        v.name === bomVariantName ? { ...v, actualCost: costVal > 0 ? costVal : undefined } : v
+      );
+    }
+    if (
+      !updatedProduct.variants ||
+      updatedProduct.variants.length <= 1 ||
+      bomVariantName === 'Standard' ||
+      bomVariantName === updatedProduct.variants[0]?.name
+    ) {
+      updatedProduct.actualCost = costVal > 0 ? costVal : undefined;
+    }
+
+    await saveToStore('products', updatedProduct);
+    setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+    setBomProduct(updatedProduct);
+    await addAuditLog({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      action: 'BOM_ACTUAL_COST_SAVED',
+      module: 'Menu',
+      details: `Saved owner actual cost for ${bomProduct.name} (${bomVariantName}): PKR ${costVal}`,
+    });
+    showToast(`Actual cost saved: ${settings.currency} ${costVal}`, 'success');
+    triggerDataRefresh();
+  };
+
+  // Reset BOM Owner Cost to Calculated Raw Ingredient Sum
+  const handleResetBomOwnerCost = async () => {
+    if (!bomProduct) return;
+    const updatedProduct = { ...bomProduct };
+    if (updatedProduct.variants && updatedProduct.variants.length > 0) {
+      updatedProduct.variants = updatedProduct.variants.map((v) =>
+        v.name === bomVariantName ? { ...v, actualCost: undefined } : v
+      );
+    }
+    if (
+      !updatedProduct.variants ||
+      updatedProduct.variants.length <= 1 ||
+      bomVariantName === 'Standard' ||
+      bomVariantName === updatedProduct.variants[0]?.name
+    ) {
+      updatedProduct.actualCost = undefined;
+    }
+
+    await saveToStore('products', updatedProduct);
+    setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+    setBomProduct(updatedProduct);
+    setBomOwnerCostInput('');
+    await addAuditLog({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      action: 'BOM_ACTUAL_COST_RESET',
+      module: 'Menu',
+      details: `Reset actual cost for ${bomProduct.name} (${bomVariantName}) to raw BOM sum`,
+    });
+    showToast('Reset to raw BOM ingredient cost', 'info');
+    triggerDataRefresh();
   };
 
   // Add Ingredient in BOM Drawer
@@ -512,6 +620,30 @@ export const MenuModule: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-zinc-400 mb-1">
+                  Owner's Independent Actual Cost ({settings.currency})
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2 text-zinc-500 font-mono text-xs">
+                    {settings.currency}
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={prodActualCost !== undefined ? prodActualCost : ''}
+                    onChange={(e) =>
+                      setProdActualCost(e.target.value ? Number(e.target.value) : undefined)
+                    }
+                    placeholder="Independent food cost (optional - overrides raw BOM sum)"
+                    className="w-full pl-12 pr-3 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs font-mono text-amber-400 focus:outline-none focus:border-[#FF6B00]"
+                  />
+                </div>
+                <span className="text-[10px] text-zinc-500 mt-1 block">
+                  Write your actual costing independently; automatically used for net profit and reports.
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1">
                   Short Description
                 </label>
                 <textarea
@@ -536,7 +668,14 @@ export const MenuModule: React.FC = () => {
                       key={idx}
                       className="flex items-center justify-between p-2 rounded-lg bg-zinc-900 border border-zinc-800 text-xs"
                     >
-                      <span className="font-semibold text-white">{v.name}</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-white">{v.name}</span>
+                        {v.actualCost ? (
+                          <span className="text-[10px] text-amber-400 font-mono bg-zinc-950 px-1.5 py-0.5 rounded border border-zinc-800">
+                            Cost: {settings.currency} {v.actualCost}
+                          </span>
+                        ) : null}
+                      </div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[#FF6B00]">
                           {settings.currency} {v.price}
@@ -559,7 +698,7 @@ export const MenuModule: React.FC = () => {
                     type="text"
                     value={varNameInput}
                     onChange={(e) => setVarNameInput(e.target.value)}
-                    placeholder="Variant (e.g. Double, 4 pcs)"
+                    placeholder="Variant (e.g. Double)"
                     className="flex-1 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none"
                   />
                   <input
@@ -567,7 +706,15 @@ export const MenuModule: React.FC = () => {
                     value={varPriceInput || ''}
                     onChange={(e) => setVarPriceInput(Number(e.target.value) || 0)}
                     placeholder="Price"
-                    className="w-24 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-white focus:outline-none"
+                    className="w-20 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-white focus:outline-none"
+                  />
+                  <input
+                    type="number"
+                    value={varCostInput !== undefined ? varCostInput : ''}
+                    onChange={(e) => setVarCostInput(e.target.value ? Number(e.target.value) : undefined)}
+                    placeholder="Cost (Opt)"
+                    className="w-20 px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs font-mono text-amber-400 focus:outline-none"
+                    title="Independent Actual Cost (optional)"
                   />
                   <button
                     type="button"
@@ -717,7 +864,7 @@ export const MenuModule: React.FC = () => {
                 </div>
               )}
 
-              {/* 3 KPI Badges */}
+              {/* 3 KPI Badges & Independent Owner Costing Override */}
               {(() => {
                 const variantPrice =
                   bomProduct.variants.find((v) => v.name === bomVariantName)?.price ||
@@ -733,28 +880,99 @@ export const MenuModule: React.FC = () => {
                   if (ing) cost += r.quantity * ing.unitCost;
                 }
                 const roundedCost = Number(cost.toFixed(2));
-                const profit = Math.max(0, variantPrice - roundedCost);
+                const matchedV = bomProduct.variants.find((v) => v.name === bomVariantName);
+                const ownerCost = matchedV?.actualCost ?? bomProduct.actualCost;
+                const isCustomActive = ownerCost !== undefined && ownerCost > 0;
+                const effectiveCost = isCustomActive ? ownerCost : roundedCost;
+                const profit = Math.max(0, variantPrice - effectiveCost);
                 const margin = variantPrice > 0 ? Math.round((profit / variantPrice) * 100) : 0;
 
                 return (
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
-                      <span className="text-[10px] text-zinc-400 block uppercase">Selling Price</span>
-                      <span className="font-mono font-bold text-white text-sm">
-                        {settings.currency} {variantPrice}
-                      </span>
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                      <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
+                        <span className="text-[10px] text-zinc-400 block uppercase">Selling Price</span>
+                        <span className="font-mono font-bold text-white text-sm">
+                          {settings.currency} {variantPrice}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
+                        <div className="flex items-center justify-center gap-1">
+                          <span className="text-[10px] text-amber-400 block uppercase">
+                            {isCustomActive ? 'Actual Cost' : 'BOM Cost'}
+                          </span>
+                          {isCustomActive && (
+                            <span className="text-[8px] px-1 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 uppercase font-bold">
+                              Custom
+                            </span>
+                          )}
+                        </div>
+                        <span className="font-mono font-bold text-amber-400 text-sm">
+                          {settings.currency} {effectiveCost}
+                        </span>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
+                        <span className="text-[10px] text-emerald-400 block uppercase">Net Profit Margin</span>
+                        <span className="font-mono font-bold text-emerald-400 text-sm">
+                          +{settings.currency} {profit} ({margin}%)
+                        </span>
+                      </div>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
-                      <span className="text-[10px] text-amber-400 block uppercase">Raw Food Cost</span>
-                      <span className="font-mono font-bold text-amber-400 text-sm">
-                        {settings.currency} {roundedCost}
-                      </span>
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
-                      <span className="text-[10px] text-emerald-400 block uppercase">Net Profit Margin</span>
-                      <span className="font-mono font-bold text-emerald-400 text-sm">
-                        +{settings.currency} {profit} ({margin}%)
-                      </span>
+
+                    {/* Independent Actual Cost Override Input */}
+                    <div className="p-2.5 bg-zinc-950 rounded-xl border border-zinc-800 space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-[11px] font-bold text-zinc-300 flex items-center gap-1.5">
+                          <Calculator className="w-3.5 h-3.5 text-[#FF6B00]" />
+                          <span>Owner's Actual Cost ({bomVariantName}):</span>
+                        </span>
+                        {isCustomActive ? (
+                          <span className="text-[9px] text-emerald-400 font-bold">
+                            Independent: {settings.currency} {effectiveCost} (Raw: {settings.currency} {roundedCost})
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-zinc-500 font-mono">
+                            Calculated Raw BOM: {settings.currency} {roundedCost}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-zinc-500 font-mono text-xs">{settings.currency}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder={`e.g. ${roundedCost}`}
+                          value={bomOwnerCostInput}
+                          onChange={(e) => setBomOwnerCostInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleSaveBomOwnerCost();
+                            }
+                          }}
+                          className="flex-1 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-700 font-mono font-bold text-white text-xs focus:outline-none focus:border-[#FF6B00]"
+                          title="Enter independent actual cost and press Enter or click Save"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSaveBomOwnerCost}
+                          className="px-3.5 py-1.5 rounded-xl bg-[#FF6B00] hover:bg-[#e05e00] text-white font-bold text-xs shadow-sm transition-colors"
+                        >
+                          Save Cost
+                        </button>
+                        {isCustomActive && (
+                          <button
+                            type="button"
+                            onClick={handleResetBomOwnerCost}
+                            className="px-2.5 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold text-xs transition-colors"
+                            title="Reset to raw BOM ingredient sum"
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

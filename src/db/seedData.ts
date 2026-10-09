@@ -13,13 +13,13 @@ import {
 export const initialSettings: RestaurantSettings = {
   name: 'Tokyo Crunch',
   tagline: 'Crispy, Crunchy, Unbeatable Taste',
-  location: 'Itfaq City Commercial Area',
+  location: 'Ittfaq City Commercial Area',
   phone: '03071777948',
   currency: 'PKR',
-  receiptHeader: 'TOKYO CRUNCH - ITFAQ CITY',
+  receiptHeader: 'TOKYO CRUNCH - ITTFAQ CITY',
   receiptFooter: 'Thank you for choosing Tokyo Crunch! Please visit again.',
-  taxRatePercent: 0, // Configurable in settings
-  deliveryFeeDefault: 100,
+  taxRatePercent: 0,
+  deliveryFeeDefault: 0, // Free Home Delivery
   orderNumberPrefix: 'TC-',
   nextOrderSequence: 101,
   systemMode: 'standalone_single_system',
@@ -77,22 +77,24 @@ export const initialUsers: User[] = [
 export const initialCategories: Category[] = [
   { id: 'cat-burgers', name: 'Burgers', displayOrder: 1, iconName: 'Sandwich' },
   { id: 'cat-wraps', name: 'Wraps', displayOrder: 2, iconName: 'Utensils' },
-  { id: 'cat-shawarma', name: 'Shawarma', displayOrder: 3, iconName: 'Flame' },
-  { id: 'cat-fries', name: 'Fries', displayOrder: 4, iconName: 'Box' },
+  { id: 'cat-fried-chicken', name: 'Fried Chicken', displayOrder: 3, iconName: 'Drumstick' },
+  { id: 'cat-wings', name: 'Wings', displayOrder: 4, iconName: 'Sparkles' },
   { id: 'cat-prem-fried', name: 'Premium Fried Chicken', displayOrder: 5, iconName: 'Award' },
-  { id: 'cat-fried-chicken', name: 'Fried Chicken & Snacks', displayOrder: 6, iconName: 'Drumstick' },
-  { id: 'cat-wings', name: 'Wings', displayOrder: 7, iconName: 'Sparkles' },
-  { id: 'cat-sauces', name: 'Sauces & Dips', displayOrder: 8, iconName: 'Droplets' },
+  { id: 'cat-shawarma', name: 'Shawarmas', displayOrder: 6, iconName: 'Flame' },
+  { id: 'cat-fries', name: 'Fries', displayOrder: 7, iconName: 'Box' },
+  { id: 'cat-sauces', name: 'Sauces', displayOrder: 8, iconName: 'Droplets' },
+  { id: 'cat-quesadillas', name: 'Quesadillas', displayOrder: 9, iconName: 'Layers' },
 ];
 
 export const defaultAddons = [
   { id: 'addon-cheese', name: 'Cheese Slice', price: 50 },
   { id: 'addon-jalapeno', name: 'Jalapeno', price: 50 },
-  { id: 'addon-extra-sauce', name: 'Extra Sauce', price: 50 },
 ];
 
 export const initialProducts: Product[] = [
-  // --- BURGERS ---
+  // ==========================================
+  // --- CLASSIC BURGERS ---
+  // ==========================================
   {
     id: 'prod-zinger-max',
     categoryId: 'cat-burgers',
@@ -108,14 +110,14 @@ export const initialProducts: Product[] = [
     isPopular: true,
   },
   {
-    id: 'prod-chicken-filetto',
+    id: 'prod-chicken-filleto',
     categoryId: 'cat-burgers',
-    name: 'Chicken Filetto',
+    name: 'Chicken Filleto',
     description: 'Tender breast filet crumbed with Tokyo Crunch seasoning',
-    basePrice: 350,
+    basePrice: 380,
     variants: [
-      { name: 'Single', price: 350 },
-      { name: 'Double', price: 500 },
+      { name: 'Single', price: 380 },
+      { name: 'Double', price: 550 },
     ],
     addons: defaultAddons,
     available: true,
@@ -125,10 +127,10 @@ export const initialProducts: Product[] = [
     categoryId: 'cat-burgers',
     name: 'Zesty Crunch',
     description: 'Zesty tangy glaze over ultra-crunch chicken patty',
-    basePrice: 350,
+    basePrice: 380,
     variants: [
-      { name: 'Single', price: 350 },
-      { name: 'Double', price: 500 },
+      { name: 'Single', price: 380 },
+      { name: 'Double', price: 560 },
     ],
     addons: defaultAddons,
     available: true,
@@ -150,7 +152,7 @@ export const initialProducts: Product[] = [
     id: 'prod-chappli-burger',
     categoryId: 'cat-burgers',
     name: 'Chappli Burger',
-    description: 'Traditional spiced chappli kebab in a sesame bun',
+    description: 'Traditional spiced chappli patty in a soft sesame bun',
     basePrice: 250,
     variants: [
       { name: 'Single', price: 250 },
@@ -159,25 +161,17 @@ export const initialProducts: Product[] = [
     addons: defaultAddons,
     available: true,
   },
-  // Premium Burgers
+
+  // ==========================================
+  // --- PREMIUM BURGERS ---
+  // ==========================================
   {
     id: 'prod-mighty-duo',
     categoryId: 'cat-burgers',
     name: 'Mighty Duo',
     description: 'Twin premium crispy fillets loaded with cheese and herbs',
-    basePrice: 500,
-    variants: [{ name: 'Standard', price: 500 }],
-    addons: defaultAddons,
-    available: true,
-    isPopular: true,
-  },
-  {
-    id: 'prod-double-stack-zinger',
-    categoryId: 'cat-burgers',
-    name: 'Double Stack Zinger',
-    description: 'Double jumbo fillets stacked high with extra crunch',
-    basePrice: 500,
-    variants: [{ name: 'Standard', price: 500 }],
+    basePrice: 530,
+    variants: [{ name: 'Standard', price: 530 }],
     addons: defaultAddons,
     available: true,
     isPopular: true,
@@ -187,30 +181,43 @@ export const initialProducts: Product[] = [
     categoryId: 'cat-burgers',
     name: 'Sizzler Smash',
     description: 'Hot sizzling spicy fillet, caramelized onions, melted dip',
-    basePrice: 520,
-    variants: [{ name: 'Standard', price: 520 }],
+    basePrice: 640,
+    variants: [{ name: 'Standard', price: 640 }],
     addons: defaultAddons,
     available: true,
+  },
+  {
+    id: 'prod-double-stack',
+    categoryId: 'cat-burgers',
+    name: 'Double Stack',
+    description: 'Double jumbo fillets stacked high with extra crunch',
+    basePrice: 620,
+    variants: [{ name: 'Standard', price: 620 }],
+    addons: defaultAddons,
+    available: true,
+    isPopular: true,
   },
   {
     id: 'prod-melted-feast',
     categoryId: 'cat-burgers',
     name: 'Melted Feast',
     description: 'Enveloped in molten cheese, garlic herb mayo, crisp pickles',
-    basePrice: 550,
-    variants: [{ name: 'Standard', price: 550 }],
+    basePrice: 750,
+    variants: [{ name: 'Standard', price: 750 }],
     addons: defaultAddons,
     available: true,
   },
 
+  // ==========================================
   // --- WRAPS ---
+  // ==========================================
   {
     id: 'prod-crispy-wrap',
     categoryId: 'cat-wraps',
     name: 'Crispy Wrap',
     description: 'Golden strips with garlic mayo in a grilled tortilla',
-    basePrice: 500,
-    variants: [{ name: 'Standard', price: 500 }],
+    basePrice: 550,
+    variants: [{ name: 'Standard', price: 550 }],
     addons: defaultAddons,
     available: true,
   },
@@ -218,7 +225,7 @@ export const initialProducts: Product[] = [
     id: 'prod-sizzler-wrap',
     categoryId: 'cat-wraps',
     name: 'Sizzler Wrap',
-    description: 'Spicy chicken chunks, firecracker drizzle and veggies',
+    description: 'Spicy chicken chunks, firecracker drizzle and fresh greens',
     basePrice: 550,
     variants: [{ name: 'Standard', price: 550 }],
     addons: defaultAddons,
@@ -229,20 +236,195 @@ export const initialProducts: Product[] = [
     categoryId: 'cat-wraps',
     name: 'Prime Fold Wrap',
     description: 'Loaded with double chicken, cheese slices and crunch flakes',
-    basePrice: 600,
-    variants: [{ name: 'Standard', price: 600 }],
+    basePrice: 650,
+    variants: [{ name: 'Standard', price: 650 }],
     addons: defaultAddons,
     available: true,
   },
 
-  // --- SHAWARMA ---
+  // ==========================================
+  // --- FRIED CHICKEN ---
+  // ==========================================
+  {
+    id: 'prod-chicken-nuggets',
+    categoryId: 'cat-fried-chicken',
+    name: 'Chicken Nuggets',
+    description: 'Crispy minced chicken bites loved by all ages',
+    basePrice: 250,
+    variants: [
+      { name: '5Pcs', price: 250 },
+      { name: '10Pcs', price: 500 },
+    ],
+    addons: [],
+    available: true,
+  },
+  {
+    id: 'prod-arabian-nuggets',
+    categoryId: 'cat-fried-chicken',
+    name: 'Arabian Nuggets',
+    description: 'Exotic Arabian spiced crunchy chicken nuggets',
+    basePrice: 300,
+    variants: [
+      { name: '5Pcs', price: 300 },
+      { name: '10Pcs', price: 600 },
+    ],
+    addons: [],
+    available: true,
+  },
+  {
+    id: 'prod-hot-shots',
+    categoryId: 'cat-fried-chicken',
+    name: 'Hot Shots',
+    description: 'Bite-sized fiery chicken popcorn tossed in seasoning',
+    basePrice: 200,
+    variants: [
+      { name: '5Pcs', price: 200 },
+      { name: '10Pcs', price: 400 },
+    ],
+    addons: [],
+    available: true,
+  },
+  {
+    id: 'prod-spicy-tenders',
+    categoryId: 'cat-fried-chicken',
+    name: 'Spicy Tenders',
+    description: 'Long chicken breast fillets marinated with red pepper kick',
+    basePrice: 500,
+    variants: [
+      { name: '5Pcs', price: 500 },
+      { name: '10Pcs', price: 950 },
+    ],
+    addons: [],
+    available: true,
+  },
+  {
+    id: 'prod-juicy-tenders',
+    categoryId: 'cat-fried-chicken',
+    name: 'Juicy Tenders',
+    description: 'Super succulent golden strips served piping hot',
+    basePrice: 500,
+    variants: [
+      { name: '5Pcs', price: 500 },
+      { name: '10Pcs', price: 950 },
+    ],
+    addons: [],
+    available: true,
+  },
+  {
+    id: 'prod-mega-bucket',
+    categoryId: 'cat-fried-chicken',
+    name: 'Crunchy Mega Bucket',
+    description: 'Family mega feast with crispy fried chicken and sides',
+    basePrice: 2100,
+    variants: [{ name: 'Standard', price: 2100 }],
+    addons: [],
+    available: true,
+    isPopular: true,
+  },
+
+  // ==========================================
+  // --- WINGS ---
+  // ==========================================
+  {
+    id: 'prod-hot-wings',
+    categoryId: 'cat-wings',
+    name: 'Hot Wings',
+    description: 'Classic crunchy wings with spicy peppery glaze',
+    basePrice: 300,
+    variants: [
+      { name: '5Pcs', price: 300 },
+      { name: '10Pcs', price: 600 },
+    ],
+    addons: [],
+    available: true,
+  },
+  {
+    id: 'prod-bbq-wings',
+    categoryId: 'cat-wings',
+    name: 'B.B.Q Wings',
+    description: 'Smoky sweet barbecue tossed crisp chicken wings',
+    basePrice: 400,
+    variants: [
+      { name: '5Pcs', price: 400 },
+      { name: '10Pcs', price: 750 },
+    ],
+    addons: [],
+    available: true,
+  },
+  {
+    id: 'prod-loaded-wings',
+    categoryId: 'cat-wings',
+    name: 'Loaded Wings',
+    description: 'Wings drizzled with cheese dip and jalapeno crumbles',
+    basePrice: 400,
+    variants: [
+      { name: '5Pcs', price: 400 },
+      { name: '10Pcs', price: 750 },
+    ],
+    addons: [],
+    available: true,
+  },
+
+  // ==========================================
+  // --- PREMIUM FRIED CHICKEN ---
+  // ==========================================
+  {
+    id: 'prod-pfc-jalapeno',
+    categoryId: 'cat-prem-fried',
+    name: 'Jalapeno Fried Chicken',
+    description: 'Spiced with fiery pickled jalapenos and green chilli glaze',
+    basePrice: 500,
+    variants: [
+      { name: '2Pcs', price: 500 },
+      { name: '4Pcs', price: 950 },
+      { name: '6Pcs', price: 1400 },
+      { name: '8Pcs', price: 1850 },
+    ],
+    addons: [],
+    available: true,
+  },
+  {
+    id: 'prod-pfc-premium',
+    categoryId: 'cat-prem-fried',
+    name: 'Premium Fried Chicken',
+    description: 'Signature crispy golden skin, juicy tender bone-in chicken',
+    basePrice: 550,
+    variants: [
+      { name: '2Pcs', price: 550 },
+      { name: '4Pcs', price: 1050 },
+      { name: '6Pcs', price: 1550 },
+      { name: '8Pcs', price: 2050 },
+    ],
+    addons: [],
+    available: true,
+    isPopular: true,
+  },
+  {
+    id: 'prod-pfc-injected',
+    categoryId: 'cat-prem-fried',
+    name: 'Injected Fried Chicken',
+    description: 'Flavor-injected deep inside the meat for intense juicy taste',
+    basePrice: 600,
+    variants: [
+      { name: '2Pcs', price: 600 },
+      { name: '4Pcs', price: 1150 },
+      { name: '6Pcs', price: 1700 },
+      { name: '8Pcs', price: 2250 },
+    ],
+    addons: [],
+    available: true,
+  },
+
+  // ==========================================
+  // --- SHAWARMAS ---
+  // ==========================================
   {
     id: 'prod-dynamite-shawarma',
     categoryId: 'cat-shawarma',
     name: 'Dynamite Chicken Shawarma',
     description: 'Juicy roasted chicken chunks with dynamite spice kick',
-    basePrice: 220,
-    variants: [{ name: 'Standard', price: 220 }],
+    basePrice: 250,
+    variants: [{ name: 'Standard', price: 250 }],
     addons: defaultAddons,
     available: true,
   },
@@ -262,17 +444,19 @@ export const initialProducts: Product[] = [
     categoryId: 'cat-shawarma',
     name: 'Cheesy Rush Shawarma',
     description: 'Loaded chicken and overflowing mozzarella cheddar melt',
-    basePrice: 350,
-    variants: [{ name: 'Standard', price: 350 }],
+    basePrice: 400,
+    variants: [{ name: 'Standard', price: 400 }],
     addons: defaultAddons,
     available: true,
   },
 
+  // ==========================================
   // --- FRIES ---
+  // ==========================================
   {
     id: 'prod-plain-fries',
     categoryId: 'cat-fries',
-    name: 'Plain Salted Fries',
+    name: 'Plain Fries',
     description: 'Crisp golden potato fries with sea salt',
     basePrice: 200,
     variants: [
@@ -296,14 +480,14 @@ export const initialProducts: Product[] = [
     available: true,
   },
   {
-    id: 'prod-velvet-mayo-fries',
+    id: 'prod-mayo-fries',
     categoryId: 'cat-fries',
-    name: 'Velvet Mayo Fries',
+    name: 'Mayo Fries',
     description: 'Topped with velvety smooth garlic herb mayonnaise',
-    basePrice: 280,
+    basePrice: 250,
     variants: [
-      { name: 'Half', price: 280 },
-      { name: 'Full', price: 530 },
+      { name: 'Half', price: 250 },
+      { name: 'Full', price: 450 },
     ],
     addons: defaultAddons,
     available: true,
@@ -330,219 +514,69 @@ export const initialProducts: Product[] = [
     basePrice: 450,
     variants: [
       { name: 'Half', price: 450 },
-      { name: 'Full', price: 800 },
+      { name: 'Full', price: 850 },
     ],
     addons: defaultAddons,
     available: true,
   },
 
-  // --- PREMIUM FRIED CHICKEN ---
-  {
-    id: 'prod-pfc-premium',
-    categoryId: 'cat-prem-fried',
-    name: 'Premium Fried Chicken',
-    description: 'Signature crispy golden skin, juicy tender bone-in chicken',
-    basePrice: 500,
-    variants: [
-      { name: '2 pcs', price: 500 },
-      { name: '4 pcs', price: 950 },
-      { name: '6 pcs', price: 1400 },
-      { name: '8 pcs', price: 1850 },
-    ],
-    addons: defaultAddons,
-    available: true,
-    isPopular: true,
-  },
-  {
-    id: 'prod-pfc-jalapeno',
-    categoryId: 'cat-prem-fried',
-    name: 'Jalapeno Fried Chicken',
-    description: 'Spiced with fiery pickled jalapenos and green chilli glaze',
-    basePrice: 550,
-    variants: [
-      { name: '2 pcs', price: 550 },
-      { name: '4 pcs', price: 1050 },
-      { name: '6 pcs', price: 1550 },
-      { name: '8 pcs', price: 2050 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-  {
-    id: 'prod-pfc-injected',
-    categoryId: 'cat-prem-fried',
-    name: 'Injected Fried Chicken',
-    description: 'Flavor-injected deep inside the meat for intense juicy taste',
-    basePrice: 600,
-    variants: [
-      { name: '2 pcs', price: 600 },
-      { name: '4 pcs', price: 1150 },
-      { name: '6 pcs', price: 1700 },
-      { name: '8 pcs', price: 2250 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-
-  // --- FRIED CHICKEN & SNACKS ---
-  {
-    id: 'prod-chicken-nuggets',
-    categoryId: 'cat-fried-chicken',
-    name: 'Chicken Nuggets',
-    description: 'Crispy minced chicken bites loved by all ages',
-    basePrice: 230,
-    variants: [
-      { name: '5 pcs', price: 230 },
-      { name: '10 pcs', price: 450 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-  {
-    id: 'prod-fillet-nuggets',
-    categoryId: 'cat-fried-chicken',
-    name: 'Fillet Nuggets',
-    description: '100% whole muscle chicken breast chunks in crunch batter',
-    basePrice: 280,
-    variants: [
-      { name: '5 pcs', price: 280 },
-      { name: '10 pcs', price: 550 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-  {
-    id: 'prod-hot-shots',
-    categoryId: 'cat-fried-chicken',
-    name: 'Hot Shots',
-    description: 'Bite-sized fiery chicken popcorn tossed in seasoning',
-    basePrice: 250,
-    variants: [
-      { name: '5 pcs', price: 250 },
-      { name: '10 pcs', price: 500 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-  {
-    id: 'prod-spicy-tenders',
-    categoryId: 'cat-fried-chicken',
-    name: 'Spicy Tenders',
-    description: 'Long chicken breast fillets marinated with red pepper kick',
-    basePrice: 300,
-    variants: [
-      { name: '3 pcs (Small)', price: 300 },
-      { name: '6 pcs (Large)', price: 550 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-  {
-    id: 'prod-juicy-tenders',
-    categoryId: 'cat-fried-chicken',
-    name: 'Juicy Tenders',
-    description: 'Super succulent golden strips served piping hot',
-    basePrice: 450,
-    variants: [
-      { name: '3 pcs (Small)', price: 450 },
-      { name: '6 pcs (Large)', price: 900 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-  {
-    id: 'prod-mega-bucket',
-    categoryId: 'cat-fried-chicken',
-    name: 'Crunchy Mega Bucket',
-    description: '10 pcs crispy chicken, 10 hot shots, 1 family fries & 3 dips',
-    basePrice: 2200,
-    variants: [{ name: 'Standard Bucket', price: 2200 }],
-    addons: defaultAddons,
-    available: true,
-    isPopular: true,
-  },
-
-  // --- WINGS ---
-  {
-    id: 'prod-hot-wings',
-    categoryId: 'cat-wings',
-    name: 'Hot Wings',
-    description: 'Classic crunchy wings with spicy peppery glaze',
-    basePrice: 350,
-    variants: [
-      { name: '5 pcs', price: 350 },
-      { name: '10 pcs', price: 700 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-  {
-    id: 'prod-bbq-wings',
-    categoryId: 'cat-wings',
-    name: 'BBQ Wings',
-    description: 'Smoky sweet barbecue tossed crisp chicken wings',
-    basePrice: 400,
-    variants: [
-      { name: '5 pcs', price: 400 },
-      { name: '10 pcs', price: 750 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-  {
-    id: 'prod-loaded-wings',
-    categoryId: 'cat-wings',
-    name: 'Loaded Wings',
-    description: 'Wings drizzled with cheese dip and jalapeno crumbles',
-    basePrice: 400,
-    variants: [
-      { name: '5 pcs', price: 400 },
-      { name: '10 pcs', price: 750 },
-    ],
-    addons: defaultAddons,
-    available: true,
-  },
-
-  // --- SAUCES ---
+  // ==========================================
+  // --- SAUCES (RS. 50 EACH) ---
+  // ==========================================
   {
     id: 'prod-sauce-special',
     categoryId: 'cat-sauces',
-    name: 'Tokyo Crunch Special Sauce',
+    name: 'Special Sauce',
     description: 'House secret creamy garlic spice dip',
     basePrice: 50,
-    variants: [{ name: 'Dip Cup (50ml)', price: 50 }],
+    variants: [{ name: 'Standard', price: 50 }],
     addons: [],
     available: true,
   },
   {
     id: 'prod-sauce-mustard',
     categoryId: 'cat-sauces',
-    name: 'Honey Mustard Dip',
+    name: 'Mustard Sauce',
     description: 'Sweet honey combined with yellow mustard seeds',
     basePrice: 50,
-    variants: [{ name: 'Dip Cup (50ml)', price: 50 }],
+    variants: [{ name: 'Standard', price: 50 }],
     addons: [],
     available: true,
   },
   {
     id: 'prod-sauce-bbq',
     categoryId: 'cat-sauces',
-    name: 'Smoky BBQ Dip',
-    description: 'Rich hickory smoke and molasses sauce',
+    name: 'B. B. Q Sauce',
+    description: 'Rich hickory smoke and barbecue sauce',
     basePrice: 50,
-    variants: [{ name: 'Dip Cup (50ml)', price: 50 }],
+    variants: [{ name: 'Standard', price: 50 }],
     addons: [],
     available: true,
   },
   {
     id: 'prod-sauce-thousand',
     categoryId: 'cat-sauces',
-    name: 'Thousand Island Dip',
+    name: 'Thousand Island',
     description: 'Classic tangy relish dressing',
     basePrice: 50,
-    variants: [{ name: 'Dip Cup (50ml)', price: 50 }],
+    variants: [{ name: 'Standard', price: 50 }],
     addons: [],
     available: true,
+  },
+
+  // ==========================================
+  // --- QUESADILLAS ---
+  // ==========================================
+  {
+    id: 'prod-cheesy-quesadillas',
+    categoryId: 'cat-quesadillas',
+    name: 'Cheesy Quesadillas',
+    description: 'Crisp toasted tortilla stuffed with seasoned chicken and molten cheese',
+    basePrice: 700,
+    variants: [{ name: 'Standard', price: 700 }],
+    addons: defaultAddons,
+    available: true,
+    isPopular: true,
   },
 ];
 
@@ -565,22 +599,24 @@ export const initialIngredients: Ingredient[] = [
 export const initialRecipes: RecipeItem[] = [
   // Zinger Max (Single)
   { id: 'rec-1', productId: 'prod-zinger-max', variantName: 'Single', ingredientId: 'ing-buns', quantity: 1 },
-  { id: 'rec-2', productId: 'prod-zinger-max', variantName: 'Single', ingredientId: 'ing-chicken-fillet', quantity: 0.15 }, // 150g
-  { id: 'rec-3', productId: 'prod-zinger-max', variantName: 'Single', ingredientId: 'ing-mayo-sauce', quantity: 0.03 }, // 30g
+  { id: 'rec-2', productId: 'prod-zinger-max', variantName: 'Single', ingredientId: 'ing-chicken-fillet', quantity: 0.15 },
+  { id: 'rec-3', productId: 'prod-zinger-max', variantName: 'Single', ingredientId: 'ing-mayo-sauce', quantity: 0.03 },
   { id: 'rec-4', productId: 'prod-zinger-max', variantName: 'Single', ingredientId: 'ing-breading', quantity: 0.04 },
   { id: 'rec-5', productId: 'prod-zinger-max', variantName: 'Single', ingredientId: 'ing-packaging', quantity: 1 },
 
   // Zinger Max (Double)
   { id: 'rec-6', productId: 'prod-zinger-max', variantName: 'Double', ingredientId: 'ing-buns', quantity: 1 },
-  { id: 'rec-7', productId: 'prod-zinger-max', variantName: 'Double', ingredientId: 'ing-chicken-fillet', quantity: 0.28 }, // 280g
+  { id: 'rec-7', productId: 'prod-zinger-max', variantName: 'Double', ingredientId: 'ing-chicken-fillet', quantity: 0.28 },
   { id: 'rec-8', productId: 'prod-zinger-max', variantName: 'Double', ingredientId: 'ing-mayo-sauce', quantity: 0.05 },
   { id: 'rec-9', productId: 'prod-zinger-max', variantName: 'Double', ingredientId: 'ing-breading', quantity: 0.07 },
   { id: 'rec-10', productId: 'prod-zinger-max', variantName: 'Double', ingredientId: 'ing-packaging', quantity: 1 },
 
-  // Chicken Filetto (Single)
-  { id: 'rec-11', productId: 'prod-chicken-filetto', variantName: 'Single', ingredientId: 'ing-buns', quantity: 1 },
-  { id: 'rec-12', productId: 'prod-chicken-filetto', variantName: 'Single', ingredientId: 'ing-chicken-fillet', quantity: 0.13 },
-  { id: 'rec-13', productId: 'prod-chicken-filetto', variantName: 'Single', ingredientId: 'ing-packaging', quantity: 1 },
+  // Chicken Filleto (Single / Double)
+  { id: 'rec-11', productId: 'prod-chicken-filleto', variantName: 'Single', ingredientId: 'ing-buns', quantity: 1 },
+  { id: 'rec-12', productId: 'prod-chicken-filleto', variantName: 'Single', ingredientId: 'ing-chicken-fillet', quantity: 0.13 },
+  { id: 'rec-13', productId: 'prod-chicken-filleto', variantName: 'Single', ingredientId: 'ing-packaging', quantity: 1 },
+  { id: 'rec-13b', productId: 'prod-chicken-filleto', variantName: 'Double', ingredientId: 'ing-buns', quantity: 1 },
+  { id: 'rec-13c', productId: 'prod-chicken-filleto', variantName: 'Double', ingredientId: 'ing-chicken-fillet', quantity: 0.25 },
 
   // Crispy Wrap
   { id: 'rec-14', productId: 'prod-crispy-wrap', variantName: 'Standard', ingredientId: 'ing-tortilla', quantity: 1 },
@@ -593,27 +629,23 @@ export const initialRecipes: RecipeItem[] = [
   { id: 'rec-19', productId: 'prod-zinger-shawarma', variantName: 'Standard', ingredientId: 'ing-chicken-fillet', quantity: 0.12 },
   { id: 'rec-20', productId: 'prod-zinger-shawarma', variantName: 'Standard', ingredientId: 'ing-mayo-sauce', quantity: 0.03 },
 
-  // Plain Fries (Half)
+  // Plain Fries (Half / Full)
   { id: 'rec-21', productId: 'prod-plain-fries', variantName: 'Half', ingredientId: 'ing-potatoes', quantity: 0.2 },
   { id: 'rec-22', productId: 'prod-plain-fries', variantName: 'Half', ingredientId: 'ing-packaging', quantity: 1 },
-
-  // Plain Fries (Full)
   { id: 'rec-23', productId: 'prod-plain-fries', variantName: 'Full', ingredientId: 'ing-potatoes', quantity: 0.4 },
   { id: 'rec-24', productId: 'prod-plain-fries', variantName: 'Full', ingredientId: 'ing-packaging', quantity: 1 },
 
-  // Premium Fried Chicken 2pcs
-  { id: 'rec-25', productId: 'prod-pfc-premium', variantName: '2 pcs', ingredientId: 'ing-chicken-bone', quantity: 0.35 },
-  { id: 'rec-26', productId: 'prod-pfc-premium', variantName: '2 pcs', ingredientId: 'ing-breading', quantity: 0.06 },
-  { id: 'rec-27', productId: 'prod-pfc-premium', variantName: '2 pcs', ingredientId: 'ing-packaging', quantity: 1 },
+  // Premium Fried Chicken (2Pcs / 4Pcs)
+  { id: 'rec-25', productId: 'prod-pfc-premium', variantName: '2Pcs', ingredientId: 'ing-chicken-bone', quantity: 0.35 },
+  { id: 'rec-26', productId: 'prod-pfc-premium', variantName: '2Pcs', ingredientId: 'ing-breading', quantity: 0.06 },
+  { id: 'rec-27', productId: 'prod-pfc-premium', variantName: '2Pcs', ingredientId: 'ing-packaging', quantity: 1 },
+  { id: 'rec-28', productId: 'prod-pfc-premium', variantName: '4Pcs', ingredientId: 'ing-chicken-bone', quantity: 0.70 },
+  { id: 'rec-29', productId: 'prod-pfc-premium', variantName: '4Pcs', ingredientId: 'ing-breading', quantity: 0.12 },
+  { id: 'rec-30', productId: 'prod-pfc-premium', variantName: '4Pcs', ingredientId: 'ing-packaging', quantity: 1 },
 
-  // Premium Fried Chicken 4pcs
-  { id: 'rec-28', productId: 'prod-pfc-premium', variantName: '4 pcs', ingredientId: 'ing-chicken-bone', quantity: 0.70 },
-  { id: 'rec-29', productId: 'prod-pfc-premium', variantName: '4 pcs', ingredientId: 'ing-breading', quantity: 0.12 },
-  { id: 'rec-30', productId: 'prod-pfc-premium', variantName: '4 pcs', ingredientId: 'ing-packaging', quantity: 1 },
-
-  // Hot Wings (5 pcs)
-  { id: 'rec-31', productId: 'prod-hot-wings', variantName: '5 pcs', ingredientId: 'ing-chicken-wings', quantity: 0.25 },
-  { id: 'rec-32', productId: 'prod-hot-wings', variantName: '5 pcs', ingredientId: 'ing-breading', quantity: 0.04 },
+  // Hot Wings (5Pcs)
+  { id: 'rec-31', productId: 'prod-hot-wings', variantName: '5Pcs', ingredientId: 'ing-chicken-wings', quantity: 0.25 },
+  { id: 'rec-32', productId: 'prod-hot-wings', variantName: '5Pcs', ingredientId: 'ing-breading', quantity: 0.04 },
 
   // Zesty Crunch (Single / Double)
   { id: 'rec-33', productId: 'prod-zesty-crunch', variantName: 'Single', ingredientId: 'ing-buns', quantity: 1 },
@@ -639,8 +671,8 @@ export const initialRecipes: RecipeItem[] = [
   { id: 'rec-47', productId: 'prod-mighty-duo', variantName: 'Standard', ingredientId: 'ing-buns', quantity: 1 },
   { id: 'rec-48', productId: 'prod-mighty-duo', variantName: 'Standard', ingredientId: 'ing-chicken-fillet', quantity: 0.25 },
   { id: 'rec-49', productId: 'prod-mighty-duo', variantName: 'Standard', ingredientId: 'ing-cheese-slices', quantity: 1 },
-  { id: 'rec-50', productId: 'prod-double-stack-zinger', variantName: 'Standard', ingredientId: 'ing-buns', quantity: 1 },
-  { id: 'rec-51', productId: 'prod-double-stack-zinger', variantName: 'Standard', ingredientId: 'ing-chicken-fillet', quantity: 0.28 },
+  { id: 'rec-50', productId: 'prod-double-stack', variantName: 'Standard', ingredientId: 'ing-buns', quantity: 1 },
+  { id: 'rec-51', productId: 'prod-double-stack', variantName: 'Standard', ingredientId: 'ing-chicken-fillet', quantity: 0.28 },
   { id: 'rec-52', productId: 'prod-sizzler-smash', variantName: 'Standard', ingredientId: 'ing-buns', quantity: 1 },
   { id: 'rec-53', productId: 'prod-sizzler-smash', variantName: 'Standard', ingredientId: 'ing-chicken-fillet', quantity: 0.20 },
   { id: 'rec-54', productId: 'prod-melted-feast', variantName: 'Standard', ingredientId: 'ing-buns', quantity: 1 },
@@ -658,11 +690,11 @@ export const initialRecipes: RecipeItem[] = [
   { id: 'rec-64', productId: 'prod-cheesy-rush-shawarma', variantName: 'Standard', ingredientId: 'ing-chicken-fillet', quantity: 0.14 },
   { id: 'rec-65', productId: 'prod-cheesy-rush-shawarma', variantName: 'Standard', ingredientId: 'ing-cheese-slices', quantity: 1 },
 
-  // Other Fries
+  // Fries
   { id: 'rec-66', productId: 'prod-masala-fries', variantName: 'Half', ingredientId: 'ing-potatoes', quantity: 0.2 },
   { id: 'rec-67', productId: 'prod-masala-fries', variantName: 'Full', ingredientId: 'ing-potatoes', quantity: 0.4 },
-  { id: 'rec-68', productId: 'prod-velvet-mayo-fries', variantName: 'Half', ingredientId: 'ing-potatoes', quantity: 0.2 },
-  { id: 'rec-69', productId: 'prod-velvet-mayo-fries', variantName: 'Full', ingredientId: 'ing-potatoes', quantity: 0.4 },
+  { id: 'rec-68', productId: 'prod-mayo-fries', variantName: 'Half', ingredientId: 'ing-potatoes', quantity: 0.2 },
+  { id: 'rec-69', productId: 'prod-mayo-fries', variantName: 'Full', ingredientId: 'ing-potatoes', quantity: 0.4 },
   { id: 'rec-70', productId: 'prod-loaded-fries', variantName: 'Half', ingredientId: 'ing-potatoes', quantity: 0.25 },
   { id: 'rec-71', productId: 'prod-loaded-fries', variantName: 'Half', ingredientId: 'ing-chicken-fillet', quantity: 0.08 },
   { id: 'rec-72', productId: 'prod-loaded-fries', variantName: 'Full', ingredientId: 'ing-potatoes', quantity: 0.45 },
@@ -670,25 +702,29 @@ export const initialRecipes: RecipeItem[] = [
   { id: 'rec-74', productId: 'prod-cheesy-melt-fries', variantName: 'Half', ingredientId: 'ing-potatoes', quantity: 0.25 },
   { id: 'rec-75', productId: 'prod-cheesy-melt-fries', variantName: 'Full', ingredientId: 'ing-potatoes', quantity: 0.45 },
 
-  // Snacks & Chicken Bites
-  { id: 'rec-76', productId: 'prod-chicken-nuggets', variantName: '5 pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.12 },
-  { id: 'rec-77', productId: 'prod-chicken-nuggets', variantName: '10 pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.24 },
-  { id: 'rec-78', productId: 'prod-fillet-nuggets', variantName: '5 pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.14 },
-  { id: 'rec-79', productId: 'prod-fillet-nuggets', variantName: '10 pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.28 },
-  { id: 'rec-80', productId: 'prod-hot-shots', variantName: '5 pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.12 },
-  { id: 'rec-81', productId: 'prod-hot-shots', variantName: '10 pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.24 },
-  { id: 'rec-82', productId: 'prod-spicy-tenders', variantName: '3 pcs (Small)', ingredientId: 'ing-chicken-fillet', quantity: 0.15 },
-  { id: 'rec-83', productId: 'prod-spicy-tenders', variantName: '6 pcs (Large)', ingredientId: 'ing-chicken-fillet', quantity: 0.30 },
-  { id: 'rec-84', productId: 'prod-juicy-tenders', variantName: '3 pcs (Small)', ingredientId: 'ing-chicken-fillet', quantity: 0.18 },
-  { id: 'rec-85', productId: 'prod-juicy-tenders', variantName: '6 pcs (Large)', ingredientId: 'ing-chicken-fillet', quantity: 0.36 },
-  { id: 'rec-86', productId: 'prod-mega-bucket', variantName: 'Standard Bucket', ingredientId: 'ing-chicken-bone', quantity: 1.8 },
-  { id: 'rec-87', productId: 'prod-mega-bucket', variantName: 'Standard Bucket', ingredientId: 'ing-potatoes', quantity: 0.4 },
+  // Fried Chicken & Wings
+  { id: 'rec-76', productId: 'prod-chicken-nuggets', variantName: '5Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.12 },
+  { id: 'rec-77', productId: 'prod-chicken-nuggets', variantName: '10Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.24 },
+  { id: 'rec-78', productId: 'prod-arabian-nuggets', variantName: '5Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.14 },
+  { id: 'rec-79', productId: 'prod-arabian-nuggets', variantName: '10Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.28 },
+  { id: 'rec-80', productId: 'prod-hot-shots', variantName: '5Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.12 },
+  { id: 'rec-81', productId: 'prod-hot-shots', variantName: '10Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.24 },
+  { id: 'rec-82', productId: 'prod-spicy-tenders', variantName: '5Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.20 },
+  { id: 'rec-83', productId: 'prod-spicy-tenders', variantName: '10Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.40 },
+  { id: 'rec-84', productId: 'prod-juicy-tenders', variantName: '5Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.22 },
+  { id: 'rec-85', productId: 'prod-juicy-tenders', variantName: '10Pcs', ingredientId: 'ing-chicken-fillet', quantity: 0.44 },
+  { id: 'rec-86', productId: 'prod-mega-bucket', variantName: 'Standard', ingredientId: 'ing-chicken-bone', quantity: 1.8 },
+  { id: 'rec-87', productId: 'prod-mega-bucket', variantName: 'Standard', ingredientId: 'ing-potatoes', quantity: 0.4 },
 
-  // BBQ & Loaded Wings
-  { id: 'rec-88', productId: 'prod-bbq-wings', variantName: '5 pcs', ingredientId: 'ing-chicken-wings', quantity: 0.25 },
-  { id: 'rec-89', productId: 'prod-bbq-wings', variantName: '10 pcs', ingredientId: 'ing-chicken-wings', quantity: 0.50 },
-  { id: 'rec-90', productId: 'prod-loaded-wings', variantName: '5 pcs', ingredientId: 'ing-chicken-wings', quantity: 0.25 },
-  { id: 'rec-91', productId: 'prod-loaded-wings', variantName: '10 pcs', ingredientId: 'ing-chicken-wings', quantity: 0.50 },
+  { id: 'rec-88', productId: 'prod-bbq-wings', variantName: '5Pcs', ingredientId: 'ing-chicken-wings', quantity: 0.25 },
+  { id: 'rec-89', productId: 'prod-bbq-wings', variantName: '10Pcs', ingredientId: 'ing-chicken-wings', quantity: 0.50 },
+  { id: 'rec-90', productId: 'prod-loaded-wings', variantName: '5Pcs', ingredientId: 'ing-chicken-wings', quantity: 0.25 },
+  { id: 'rec-91', productId: 'prod-loaded-wings', variantName: '10Pcs', ingredientId: 'ing-chicken-wings', quantity: 0.50 },
+
+  // Quesadillas
+  { id: 'rec-92', productId: 'prod-cheesy-quesadillas', variantName: 'Standard', ingredientId: 'ing-tortilla', quantity: 2 },
+  { id: 'rec-93', productId: 'prod-cheesy-quesadillas', variantName: 'Standard', ingredientId: 'ing-chicken-fillet', quantity: 0.18 },
+  { id: 'rec-94', productId: 'prod-cheesy-quesadillas', variantName: 'Standard', ingredientId: 'ing-cheese-slices', quantity: 2 },
 ];
 
 export const initialSuppliers: Supplier[] = [
@@ -727,38 +763,29 @@ export const initialSuppliers: Supplier[] = [
 export const initialStaff: Staff[] = [
   {
     id: 'staff-1',
-    name: 'Muhammad Usman',
+    name: 'Hamza Tariq',
     role: 'Head Chef',
-    phone: '03021112233',
-    salary: 55000,
-    joinDate: '2026-01-15',
+    phone: '03121112233',
+    salary: 45000,
+    joinDate: '2026-01-01',
     active: true,
   },
   {
     id: 'staff-2',
     name: 'Bilal Ahmed',
-    role: 'Cashier',
-    phone: '03034445566',
-    salary: 40000,
-    joinDate: '2026-02-01',
+    role: 'Kitchen Assistant',
+    phone: '03132223344',
+    salary: 35000,
+    joinDate: '2026-01-15',
     active: true,
   },
   {
     id: 'staff-3',
-    name: 'Kamran Ali',
-    role: 'Kitchen Assistant',
-    phone: '03057778899',
+    name: 'Usman Ali',
+    role: 'Cashier',
+    phone: '03143334455',
     salary: 32000,
-    joinDate: '2026-03-10',
-    active: true,
-  },
-  {
-    id: 'staff-4',
-    name: 'Hamza Farooq',
-    role: 'Rider',
-    phone: '03129990011',
-    salary: 28000,
-    joinDate: '2026-04-05',
+    joinDate: '2026-02-01',
     active: true,
   },
 ];
@@ -767,8 +794,8 @@ export const initialCustomers: Customer[] = [
   {
     id: 'cust-walkin',
     name: 'Walk-in Customer',
-    phone: '03000000000',
-    address: 'Counter Order',
+    phone: '00000000000',
+    address: 'Tokyo Crunch Counter',
     totalOrders: 0,
     totalSpent: 0,
     currentDue: 0,
@@ -777,23 +804,12 @@ export const initialCustomers: Customer[] = [
   },
   {
     id: 'cust-1',
-    name: 'Ali Raza',
-    phone: '03011234567',
-    address: 'House # 42, Itfaq City Commercial Area',
+    name: 'Dr. Zeeshan',
+    phone: '03001234888',
+    address: 'House 42, Street 3, Ittfaq City',
     totalOrders: 3,
-    totalSpent: 2850,
+    totalSpent: 4200,
     currentDue: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'cust-2',
-    name: 'Dr. Adnan Sheikh',
-    phone: '03219876543',
-    address: 'Clinic 3, Main Boulevard',
-    totalOrders: 5,
-    totalSpent: 6200,
-    currentDue: 450, // Sample due
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },

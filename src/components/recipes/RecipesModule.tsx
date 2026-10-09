@@ -39,6 +39,7 @@ export const RecipesModule: React.FC = () => {
   // Selection
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [selectedVariantName, setSelectedVariantName] = useState<string>('');
+  const [ownerActualCostInput, setOwnerActualCostInput] = useState<string>('');
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -93,14 +94,17 @@ export const RecipesModule: React.FC = () => {
     return products.find((p) => p.id === selectedProductId) || products[0];
   }, [products, selectedProductId]);
 
-  // When active product changes, sync variant
+  // When active product or variant changes, sync owner actual cost input
   useEffect(() => {
-    if (activeProduct && activeProduct.variants.length > 0) {
-      if (!activeProduct.variants.some((v) => v.name === selectedVariantName)) {
+    if (activeProduct) {
+      if (activeProduct.variants.length > 0 && !activeProduct.variants.some((v) => v.name === selectedVariantName)) {
         setSelectedVariantName(activeProduct.variants[0].name);
       }
+      const v = activeProduct.variants.find((x) => x.name === selectedVariantName);
+      const customCost = v?.actualCost ?? activeProduct.actualCost;
+      setOwnerActualCostInput(customCost !== undefined && customCost > 0 ? String(customCost) : '');
     }
-  }, [activeProduct]);
+  }, [activeProduct, selectedVariantName]);
 
   // Active recipes for selected product + variant
   const activeRecipeItems = useMemo(() => {
@@ -119,21 +123,130 @@ export const RecipesModule: React.FC = () => {
     return v?.price || activeProduct.basePrice;
   }, [activeProduct, selectedVariantName]);
 
+  // Active owner actual cost if set
+  const currentOwnerActualCost = useMemo(() => {
+    if (!activeProduct) return undefined;
+    const v = activeProduct.variants.find((x) => x.name === selectedVariantName);
+    return v?.actualCost ?? activeProduct.actualCost;
+  }, [activeProduct, selectedVariantName]);
+
   // Calculate Total Food Cost & Margin
-  const { totalCost, grossProfit, marginPercent } = useMemo(() => {
-    let cost = 0;
+  const { ingredientCost, effectiveCost, grossProfit, marginPercent, isCustomCostActive } = useMemo(() => {
+    let ingCost = 0;
     for (const item of activeRecipeItems) {
       const ing = ingredients.find((i) => i.id === item.ingredientId);
       if (ing) {
-        cost += item.quantity * ing.unitCost;
+        ingCost += item.quantity * ing.unitCost;
       }
     }
-    const roundedCost = Number(cost.toFixed(2));
-    const profit = Math.max(0, activeVariantPrice - roundedCost);
+    const roundedIngCost = Number(ingCost.toFixed(2));
+    const isCustom = currentOwnerActualCost !== undefined && currentOwnerActualCost > 0;
+    const effective = isCustom ? currentOwnerActualCost : roundedIngCost;
+    const profit = Math.max(0, activeVariantPrice - effective);
     const margin = activeVariantPrice > 0 ? Number(((profit / activeVariantPrice) * 100).toFixed(1)) : 0;
 
-    return { totalCost: roundedCost, grossProfit: profit, marginPercent: margin };
-  }, [activeRecipeItems, ingredients, activeVariantPrice]);
+    return {
+      ingredientCost: roundedIngCost,
+      effectiveCost: effective,
+      grossProfit: profit,
+      marginPercent: margin,
+      isCustomCostActive: isCustom,
+    };
+  }, [activeRecipeItems, ingredients, activeVariantPrice, currentOwnerActualCost]);
+
+  // Save Owner Independent Actual Cost
+  const handleSaveOwnerCost = async () => {
+    if (!activeProduct) return;
+    const costVal = Number(ownerActualCostInput);
+    if (isNaN(costVal) || costVal < 0) {
+      showToast('Please enter a valid actual cost', 'warning');
+      return;
+    }
+
+    const updatedProduct = { ...activeProduct };
+    if (updatedProduct.variants && updatedProduct.variants.length > 0) {
+      updatedProduct.variants = updatedProduct.variants.map((v) =>
+        v.name === selectedVariantName ? { ...v, actualCost: costVal > 0 ? costVal : undefined } : v
+      );
+    }
+    if (
+      !updatedProduct.variants ||
+      updatedProduct.variants.length <= 1 ||
+      selectedVariantName === 'Standard' ||
+      selectedVariantName === updatedProduct.variants[0]?.name
+    ) {
+      updatedProduct.actualCost = costVal > 0 ? costVal : undefined;
+    }
+
+    await saveToStore('products', updatedProduct);
+    setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+    await addAuditLog({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      action: 'RECIPE_ACTUAL_COST_UPDATED',
+      module: 'Recipes',
+      details: `Saved owner actual cost for ${activeProduct.name} (${selectedVariantName}): PKR ${costVal}`,
+    });
+    showToast(`Actual cost saved: ${settings.currency} ${costVal}`, 'success');
+    triggerDataRefresh();
+  };
+
+  // Save specific variant actual cost
+  const handleSaveVariantCost = async (variantName: string, costVal: number | undefined) => {
+    if (!activeProduct) return;
+    const updatedProduct = { ...activeProduct };
+    if (updatedProduct.variants && updatedProduct.variants.length > 0) {
+      updatedProduct.variants = updatedProduct.variants.map((v) =>
+        v.name === variantName ? { ...v, actualCost: costVal && costVal > 0 ? costVal : undefined } : v
+      );
+      if (variantName === selectedVariantName || variantName === updatedProduct.variants[0]?.name) {
+        updatedProduct.actualCost = costVal && costVal > 0 ? costVal : undefined;
+        if (variantName === selectedVariantName) {
+          setOwnerActualCostInput(costVal && costVal > 0 ? String(costVal) : '');
+        }
+      }
+    } else {
+      updatedProduct.actualCost = costVal && costVal > 0 ? costVal : undefined;
+    }
+
+    await saveToStore('products', updatedProduct);
+    setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+    await addAuditLog({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      action: 'RECIPE_ACTUAL_COST_UPDATED',
+      module: 'Recipes',
+      details: `Saved variant actual cost for ${activeProduct.name} (${variantName}): PKR ${costVal || 'BOM Sum'}`,
+    });
+    showToast(`Actual cost for ${variantName} updated`, 'success');
+    triggerDataRefresh();
+  };
+
+  // Reset to Dynamic Ingredient Sum Cost
+  const handleResetToIngredientCost = async () => {
+    if (!activeProduct) return;
+    const updatedProduct = { ...activeProduct };
+    if (updatedProduct.variants && updatedProduct.variants.length > 0) {
+      updatedProduct.variants = updatedProduct.variants.map((v) =>
+        v.name === selectedVariantName ? { ...v, actualCost: undefined } : v
+      );
+    } else {
+      updatedProduct.actualCost = undefined;
+    }
+
+    await saveToStore('products', updatedProduct);
+    setProducts((prev) => prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p)));
+    setOwnerActualCostInput('');
+    await addAuditLog({
+      userId: currentUser.id,
+      userName: currentUser.name,
+      action: 'RECIPE_ACTUAL_COST_RESET',
+      module: 'Recipes',
+      details: `Reset actual cost for ${activeProduct.name} (${selectedVariantName}) to ingredient BOM sum`,
+    });
+    showToast(`Reset to calculated ingredient BOM cost`, 'info');
+    triggerDataRefresh();
+  };
 
   // Filtered products list for left panel
   const filteredProducts = useMemo(() => {
@@ -371,7 +484,7 @@ export const RecipesModule: React.FC = () => {
               const isSelected = p.id === selectedProductId;
               const mappedRecipeCount = recipes.filter((r) => r.productId === p.id).length;
 
-              // Calculate item food cost preview
+              // Calculate item food cost preview (prioritize owner's independent actual cost)
               const pRecipes = recipes.filter((r) => r.productId === p.id);
               let estCost = 0;
               for (const r of pRecipes) {
@@ -379,7 +492,11 @@ export const RecipesModule: React.FC = () => {
                 if (ing) estCost += r.quantity * ing.unitCost;
               }
               const roundedEstCost = Math.round(estCost);
-              const margin = p.basePrice > 0 ? Math.round(((p.basePrice - roundedEstCost) / p.basePrice) * 100) : 0;
+              const ownerCustomCost = p.variants?.[0]?.actualCost ?? p.actualCost;
+              const hasCustomCost = ownerCustomCost !== undefined && ownerCustomCost > 0;
+              const activeCost = hasCustomCost ? ownerCustomCost : roundedEstCost;
+              const hasCost = hasCustomCost || mappedRecipeCount > 0;
+              const margin = p.basePrice > 0 ? Math.round(((p.basePrice - activeCost) / p.basePrice) * 100) : 0;
 
               return (
                 <button
@@ -398,12 +515,12 @@ export const RecipesModule: React.FC = () => {
                     <div className="truncate font-bold text-xs">{p.name}</div>
                     <div className={`text-[10px] ${isSelected ? 'text-white/80' : 'text-zinc-500'}`}>
                       Price: {settings.currency} {p.basePrice} ·{' '}
-                      {mappedRecipeCount > 0 ? (
+                      {hasCost ? (
                         <span className={isSelected ? 'text-emerald-200' : 'text-emerald-400 font-semibold'}>
-                          Cost: {settings.currency} {roundedEstCost} ({margin}% margin)
+                          Cost: {settings.currency} {activeCost} {hasCustomCost ? '(Owner Actual)' : ''} ({margin}% margin)
                         </span>
                       ) : (
-                        <span className="text-red-400 font-medium">No Recipe</span>
+                        <span className="text-zinc-500 font-medium">No Cost Set</span>
                       )}
                     </div>
                   </div>
@@ -412,12 +529,14 @@ export const RecipesModule: React.FC = () => {
                     className={`text-[10px] font-mono px-2 py-0.5 rounded-full shrink-0 font-bold ${
                       isSelected
                         ? 'bg-black/25 text-white'
+                        : hasCustomCost
+                        ? 'bg-cyan-950/80 text-cyan-300 border border-cyan-800/60'
                         : mappedRecipeCount > 0
                         ? 'bg-emerald-950/70 text-emerald-400 border border-emerald-800/40'
-                        : 'bg-red-950/60 text-red-400 border border-red-800/40'
+                        : 'bg-zinc-800 text-zinc-400 border border-zinc-700'
                     }`}
                   >
-                    {mappedRecipeCount > 0 ? `${mappedRecipeCount} ingr` : 'Empty BOM'}
+                    {hasCustomCost ? 'Custom Cost' : mappedRecipeCount > 0 ? `${mappedRecipeCount} ingr` : 'No BOM'}
                   </span>
                 </button>
               );
@@ -495,11 +614,22 @@ export const RecipesModule: React.FC = () => {
               </div>
 
               <div className="p-3 rounded-xl bg-zinc-900 border border-zinc-800">
-                <span className="text-[10px] text-amber-400 uppercase font-semibold block">
-                  Actual Food Cost (COGS)
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] text-amber-400 uppercase font-semibold block">
+                    Active Cost (COGS)
+                  </span>
+                  {isCustomCostActive ? (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold uppercase">
+                      Custom Cost
+                    </span>
+                  ) : (
+                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400 font-bold uppercase">
+                      BOM Sum
+                    </span>
+                  )}
+                </div>
                 <span className="font-mono text-lg font-black text-amber-400 mt-0.5 block">
-                  {settings.currency} {totalCost.toLocaleString()}
+                  {settings.currency} {effectiveCost.toLocaleString()}
                 </span>
               </div>
 
@@ -528,6 +658,162 @@ export const RecipesModule: React.FC = () => {
                   {marginPercent}%
                 </span>
               </div>
+            </div>
+
+            {/* Independent Owner Costing Control Panel */}
+            <div className="px-4 py-3 bg-zinc-950 border-b border-zinc-800 space-y-2.5 text-xs">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center flex-wrap gap-2">
+                  <span className="text-zinc-300 font-bold flex items-center gap-1.5">
+                    <Calculator className="w-4 h-4 text-[#FF6B00]" />
+                    <span>Owner's Actual Cost for "{selectedVariantName}" (Independent Override):</span>
+                  </span>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSaveOwnerCost();
+                    }}
+                    className="flex items-center gap-1.5"
+                  >
+                    <span className="text-zinc-500 font-mono text-xs">{settings.currency}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder={`e.g. ${ingredientCost}`}
+                      value={ownerActualCostInput}
+                      onChange={(e) => setOwnerActualCostInput(e.target.value)}
+                      className="w-28 px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-700 font-mono font-extrabold text-white text-xs focus:outline-none focus:border-[#FF6B00]"
+                      title="Enter independent actual cost and press Enter or Save"
+                    />
+                    <button
+                      type="submit"
+                      className="px-3.5 py-1.5 rounded-xl bg-[#FF6B00] hover:bg-[#e05e00] text-white font-bold text-xs transition-colors shadow-sm flex items-center gap-1"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Save Actual Cost</span>
+                    </button>
+                    {isCustomCostActive && (
+                      <button
+                        type="button"
+                        onClick={handleResetToIngredientCost}
+                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold text-xs transition-colors"
+                        title="Reset to dynamic ingredient BOM sum"
+                      >
+                        Reset to BOM Sum
+                      </button>
+                    )}
+                  </form>
+                </div>
+
+                <div className="flex items-center gap-2 text-[11px]">
+                  {isCustomCostActive ? (
+                    <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950 border border-emerald-800 text-emerald-400 font-bold">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Active Custom Cost: {settings.currency} {effectiveCost} (Raw BOM: {settings.currency} {ingredientCost})</span>
+                    </span>
+                  ) : (
+                    <span className="text-zinc-400">
+                      Calculated BOM Sum: <strong className="text-white font-mono">{settings.currency} {ingredientCost}</strong> · Type your cost above to write independently
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Multi-Variant Costing Grid if product has multiple variants */}
+              {activeProduct.variants.length > 1 && (
+                <div className="pt-2 border-t border-zinc-900">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wide flex items-center gap-1.5">
+                      <Layers className="w-3 h-3 text-[#FF6B00]" />
+                      <span>All Variants Costing Grid for {activeProduct.name}</span>
+                    </span>
+                    <span className="text-[10px] text-zinc-500">
+                      Write independent costing for each size/variant directly
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
+                    {activeProduct.variants.map((v) => {
+                      const vRecipes = recipes.filter(
+                        (r) =>
+                          r.productId === activeProduct.id &&
+                          (!r.variantName || r.variantName === v.name || v.name === 'Standard')
+                      );
+                      let vBomCost = 0;
+                      for (const r of vRecipes) {
+                        const ing = ingredients.find((i) => i.id === r.ingredientId);
+                        if (ing) vBomCost += r.quantity * ing.unitCost;
+                      }
+                      const roundedVBom = Math.round(vBomCost);
+                      const hasCustom = v.actualCost !== undefined && v.actualCost > 0;
+                      const activeVCost = hasCustom ? v.actualCost! : roundedVBom;
+                      const vProfit = Math.max(0, v.price - activeVCost);
+                      const vMargin = v.price > 0 ? Math.round((vProfit / v.price) * 100) : 0;
+                      const isCurVar = v.name === selectedVariantName;
+
+                      return (
+                        <div
+                          key={v.name}
+                          className={`p-2.5 rounded-xl border transition-all ${
+                            isCurVar
+                              ? 'bg-zinc-900 border-[#FF6B00]/60 ring-1 ring-[#FF6B00]/40'
+                              : 'bg-zinc-950/80 border-zinc-800'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-white text-xs">{v.name}</span>
+                            <span className="font-mono text-zinc-400 text-xs">
+                              {settings.currency} {v.price}
+                            </span>
+                          </div>
+
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            <span className="text-[10px] text-zinc-500 font-mono">Cost:</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              placeholder={String(roundedVBom)}
+                              defaultValue={v.actualCost || ''}
+                              onBlur={(e) => {
+                                const val = Number(e.target.value);
+                                if (!isNaN(val) && val >= 0) {
+                                  handleSaveVariantCost(v.name, val > 0 ? val : undefined);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  const val = Number((e.target as HTMLInputElement).value);
+                                  if (!isNaN(val) && val >= 0) {
+                                    handleSaveVariantCost(v.name, val > 0 ? val : undefined);
+                                  }
+                                }
+                              }}
+                              className="w-20 px-2 py-0.5 rounded-lg bg-zinc-900 border border-zinc-700 font-mono font-bold text-white text-[11px] text-center focus:outline-none focus:border-[#FF6B00]"
+                              title="Type actual cost and press Enter or click outside to save"
+                            />
+                            <span
+                              className={`text-[9px] px-1.5 py-0.2 rounded font-mono font-bold ${
+                                vMargin >= 50
+                                  ? 'bg-emerald-950 text-emerald-400'
+                                  : 'bg-amber-950 text-amber-400'
+                              }`}
+                            >
+                              {vMargin}%
+                            </span>
+                          </div>
+
+                          <div className="mt-1 text-[10px] text-zinc-500 flex justify-between">
+                            <span>BOM: {settings.currency} {roundedVBom}</span>
+                            {hasCustom && <span className="text-emerald-400 font-semibold">Custom Set</span>}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Recipe Content Area */}
@@ -738,7 +1024,7 @@ export const RecipesModule: React.FC = () => {
                       Total Raw Material BOM Cost ({selectedVariantName}):
                     </span>
                     <span className="font-mono font-black text-amber-400 text-sm">
-                      {settings.currency} {totalCost.toLocaleString()}
+                      {settings.currency} {ingredientCost.toLocaleString()}
                     </span>
                   </div>
                 )}

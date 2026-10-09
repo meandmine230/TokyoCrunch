@@ -229,14 +229,25 @@ export async function initializeDatabase(): Promise<void> {
     await tx.done;
     console.log('Tokyo Crunch Database successfully seeded.');
   } else {
-    // Ensure 1-click silent printing and auto checkout printing are enabled
-    if (!existingSettings.silentKioskPrintEnabled || !existingSettings.autoPrintReceiptOnCheckout) {
-      existingSettings.silentKioskPrintEnabled = true;
-      existingSettings.autoPrintReceiptOnCheckout = true;
-      existingSettings.autoPrintKotOnCheckout = true;
-      await db.put('settings', existingSettings, 'current');
-      console.log('Tokyo Crunch settings updated with 1-click silent printing.');
+    // Sync products and categories to ensure latest official menu prices are loaded
+    const syncTx = db.transaction(['products', 'categories', 'settings'], 'readwrite');
+    for (const prod of initialProducts) {
+      await syncTx.objectStore('products').put(prod);
     }
+    for (const cat of initialCategories) {
+      await syncTx.objectStore('categories').put(cat);
+    }
+
+    // Ensure latest restaurant info and silent printing are active
+    existingSettings.location = 'Ittfaq City Commercial Area';
+    existingSettings.phone = '03071777948';
+    existingSettings.deliveryFeeDefault = 0;
+    existingSettings.silentKioskPrintEnabled = true;
+    existingSettings.autoPrintReceiptOnCheckout = true;
+    existingSettings.autoPrintKotOnCheckout = true;
+    await syncTx.objectStore('settings').put(existingSettings, 'current');
+    await syncTx.done;
+    console.log('Tokyo Crunch database successfully synced with official menu card prices.');
   }
 }
 
@@ -330,7 +341,8 @@ export function calculateOrderCostAndProfit(
   orderTotal: number,
   taxAmount: number = 0,
   recipes: RecipeItem[],
-  ingredients: Ingredient[]
+  ingredients: Ingredient[],
+  products: Product[] = []
 ): {
   itemsWithCost: OrderItem[];
   totalCost: number;
@@ -343,18 +355,32 @@ export function calculateOrderCostAndProfit(
     ingMap.set(ing.id, ing);
   }
 
+  const prodMap = new Map<string, Product>();
+  for (const p of products) {
+    prodMap.set(p.id, p);
+  }
+
   const itemsWithCost = items.map((item) => {
-    const matchedRecipes = recipes.filter(
-      (r) =>
-        r.productId === item.productId &&
-        (!r.variantName || r.variantName === item.variantName || item.variantName === 'Standard')
-    );
+    // Check if the owner has specified an independent actual cost for this product or variant
+    const prod = prodMap.get(item.productId);
+    const matchedVariant = prod?.variants.find((v) => v.name === item.variantName);
+    const ownerCustomCost = matchedVariant?.actualCost ?? prod?.actualCost;
 
     let unitCost = 0;
-    for (const rec of matchedRecipes) {
-      const ing = ingMap.get(rec.ingredientId);
-      if (ing) {
-        unitCost += rec.quantity * ing.unitCost;
+    if (ownerCustomCost !== undefined && ownerCustomCost > 0) {
+      unitCost = ownerCustomCost;
+    } else {
+      const matchedRecipes = recipes.filter(
+        (r) =>
+          r.productId === item.productId &&
+          (!r.variantName || r.variantName === item.variantName || item.variantName === 'Standard')
+      );
+
+      for (const rec of matchedRecipes) {
+        const ing = ingMap.get(rec.ingredientId);
+        if (ing) {
+          unitCost += rec.quantity * ing.unitCost;
+        }
       }
     }
 
@@ -416,6 +442,7 @@ export async function createPosOrderTransaction(params: {
   const tx = db.transaction(
     [
       'orders',
+      'products',
       'ingredients',
       'recipes',
       'inventory_ledger',
@@ -441,7 +468,8 @@ export async function createPosOrderTransaction(params: {
   const nowIso = new Date().toISOString();
   const orderId = `order-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
-  // Calculate Actual Cost (COGS) and Net Profit from Recipes & Ingredients
+  // Calculate Actual Cost (COGS) and Net Profit from Recipes & Ingredients & Owner Costing
+  const allProducts: Product[] = await tx.objectStore('products').getAll();
   const allRecipes: RecipeItem[] = await tx.objectStore('recipes').getAll();
   const ingredientsStore = tx.objectStore('ingredients');
   const allIngredients: Ingredient[] = await ingredientsStore.getAll();
@@ -451,7 +479,8 @@ export async function createPosOrderTransaction(params: {
     orderData.total,
     orderData.taxAmount || 0,
     allRecipes,
-    allIngredients
+    allIngredients,
+    allProducts
   );
 
   const finalOrder: Order = {
